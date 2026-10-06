@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="description" content="{{ restaurant_name }} Admin Dashboard"/>
+<title id="pageTabTitle">{{ restaurant_name }} — Admin Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --bg:#09090b; --sidebar:#09090b; --card:#18181b; --card2:#27272a;
+  --border:#27272a; --accent:#e4e4e7; --accent-dark:#fafafa;
+  --red:#ef4444; --green:#10b981; --yellow:#f59e0b; --purple:#8b5cf6; --cyan:#06b6d4; --blue:#3b82f6; --orange:#f97316;
+  --text:#fafafa; --text2:#a1a1aa; --text3:#71717a;
+  --sidebar-w:260px; --header-h:64px;
+  --r:10px; --r-sm:6px; --r-lg:14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ── Sidebar ── */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s ease}
+.sidebar-logo{padding:20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.logo-icon{width:32px;height:32px;background:var(--text);color:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px;line-height:1.2}
+.logo-sub{font-size:11px;color:var(--text3);font-weight:400}
+.sidebar-nav{flex:1;overflow-y:auto;padding:12px 10px}
+.nav-section-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;padding:8px 10px 6px;margin-top:8px}
+.nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:none;background:none;border-radius:var(--r-sm);cursor:pointer;color:var(--text2);font-size:13.5px;font-weight:500;transition:all .15s;text-align:left}
+.nav-btn:hover{background:var(--card2);color:var(--text)}
+.nav-btn.active{background:var(--text);color:var(--bg)}
+.nav-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-badge{margin-left:auto;min-width:20px;height:20px;background:var(--red);color:#fff;border-radius:10px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.sidebar-footer{padding:14px;border-top:1px solid var(--border)}
+.sidebar-user{display:flex;align-items:center;gap:10px}
+.user-ava{width:34px;height:34px;border-radius:50%;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+
+/* ── Main ── */
+#main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column}
+.main-header{height:var(--header-h);background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50}
+.page-title{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.header-btn{padding:7px 14px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:var(--r-sm);cursor:pointer;font-size:12.5px;font-weight:500;transition:.15s;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.header-btn:hover{background:var(--card2);border-color:var(--text3)}
+.header-btn.primary{background:var(--text);border-color:var(--text);color:var(--bg)}
+.header-btn.primary:hover{opacity:.88}
+.header-btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.header-btn.danger:hover{opacity:.88}
+.main-content{flex:1;padding:24px}
+
+/* ── Section ── */
+.section{display:none}
+.section.active{display:block;animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Stats ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+@media(max-width:1200px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;opacity:.04}
+.stat-card.blue::after{background:var(--blue)}
+.stat-card.green::after{background:var(--green)}
+.stat-card.yellow::after{background:var(--yellow)}
+.stat-card.purple::after{background:var(--purple)}
+.stat-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;background:var(--card2)}
+.stat-value{font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:-0.5px}
+.stat-label{font-size:12px;color:var(--text2)}
+.stat-delta{font-size:11px;font-weight:500;margin-top:10px;display:flex;align-items:center;gap:4px;color:var(--text3)}
+.stat-delta.up{color:var(--green)}
+
+/* ── Charts ── */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:900px){.charts-row{grid-template-columns:1fr}}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.chart-title{font-size:14px;font-weight:600;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.chart-title span{font-size:12px;color:var(--text3);font-weight:400}
+
+/* ── Table ── */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:18px}
+.table-card-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.table-card-title{font-size:15px;font-weight:600}
+.table-search{padding:7px 12px 7px 34px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:12.5px;font-family:inherit;outline:none;width:220px;transition:.15s;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%2371717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');background-repeat:no-repeat;background-position:11px center}
+.table-search:focus{border-color:var(--text3)}
+.bb-table{width:100%;border-collapse:collapse}
+.bb-table th{padding:12px 18px;font-size:11.5px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;text-align:left;background:var(--bg)}
+.bb-table td{padding:13px 18px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}
+.bb-table tbody tr:hover{background:rgba(255,255,255,.02)}
+.bb-table tbody tr:last-child td{border-bottom:none}
+.table-img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--border)}
+.img-emoji{width:44px;height:44px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px}
+
+/* ── Badges ── */
+.badge-status{padding:4px 10px;border-radius:4px;font-size:11.5px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;border:1px solid transparent}
+.bs-yangi{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:var(--blue)}
+.bs-qabul_qilindi{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:var(--green)}
+.bs-tayyorlanmoqda{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:var(--yellow)}
+.bs-tayyor{background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2);color:var(--purple)}
+.bs-yolda{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.2);color:var(--cyan)}
+.bs-yetkazildi{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:var(--green)}
+.bs-bekor_qilindi{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2);color:var(--red)}
+.badge-pill{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--card2);color:var(--text2)}
+.badge-green{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:var(--green)}
+.badge-red{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25);color:var(--red)}
+
+/* ── Action buttons ── */
+.act-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:4px;background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:.15s;font-size:13px}
+.act-btn:hover{background:var(--card2);color:var(--text);border-color:var(--text3)}
+.act-btn.del:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:var(--red)}
+.act-btn.edit:hover{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.3);color:var(--blue)}
+
+/* ── Filter tabs ── */
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.filter-tab{padding:6px 13px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--card);color:var(--text2);font-size:12.5px;font-weight:500;cursor:pointer;transition:.15s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.filter-tab:hover{background:var(--card2);color:var(--text)}
+.filter-tab.active{background:var(--text);border-color:var(--text);color:var(--bg)}
+
+/* ── Toggle switch ── */
+.toggle-switch{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--card2);border-radius:11px;transition:.2s;border:1px solid var(--border)}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:2px;bottom:2px;background:var(--text3);border-radius:50%;transition:.2s}
+.toggle-switch input:checked+.toggle-slider{background:var(--green);border-color:var(--green)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(18px);background:#fff}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:.2s}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);width:100%;max-width:500px;max-height:92vh;overflow-y:auto;transform:scale(.96) translateY(8px);transition:.2s ease-out;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.modal-overlay.open .modal-box{transform:scale(1) translateY(0)}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);z-index:1}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close{width:28px;height:28px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--text3);display:flex;align-items:center;justify-content:center;transition:.15s;font-size:18px}
+.modal-close:hover{background:var(--card2);color:var(--text)}
+.modal-body{padding:22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:var(--bg);border-radius:0 0 var(--r-lg) var(--r-lg)}
+
+/* ── Form ── */
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-control{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:13.5px;font-family:inherit;outline:none;transition:.15s}
+.form-control:focus{border-color:var(--text3);background:var(--card)}
+.form-control::placeholder{color:var(--text3)}
+select.form-control option{background:var(--bg)}
+.form-group{margin-bottom:18px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.img-preview-box{width:100%;height:140px;border:2px dashed var(--border);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;position:relative;background:var(--bg);cursor:pointer;transition:.15s}
+.img-preview-box:hover{border-color:var(--text3)}
+.img-preview-box img{width:100%;height:100%;object-fit:cover}
+.img-preview-box .img-placeholder{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text3);font-size:12px;pointer-events:none}
+
+/* ── Settings ── */
+.settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:768px){.settings-grid{grid-template-columns:1fr}}
+.settings-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.settings-card-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.settings-card-icon{width:36px;height:36px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.settings-card-title{font-size:14px;font-weight:600}
+.settings-card-desc{font-size:11.5px;color:var(--text3)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:none;padding-bottom:0}
+.setting-info{flex:1;margin-right:16px}
+.setting-key{font-size:13px;font-weight:500}
+.setting-desc{font-size:11px;color:var(--text3);margin-top:3px}
+.setting-input{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;width:220px;transition:.15s}
+.setting-input:focus{border-color:var(--text3)}
+.setting-input.mono{font-family:monospace;font-size:12px}
+
+/* ── Empty ── */
+.empty-state{text-align:center;padding:70px 20px;color:var(--text3)}
+.empty-icon{margin-bottom:14px;color:var(--border);display:flex;justify-content:center}
+.empty-text{font-size:14px;font-weight:500;color:var(--text2);margin-bottom:4px}
+.empty-sub{font-size:12px}
+
+/* ── Alert ── */
+.alert{padding:11px 14px;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;margin-bottom:18px;display:flex;align-items:center;gap:10px;border:1px solid transparent}
+.alert-success{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:var(--green)}
+.alert-info{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:var(--blue)}
+.alert-warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:var(--yellow)}
+
+/* ── Status select ── */
+.status-select{padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;outline:none;color:var(--text)}
+
+/* ── Mobile ── */
+#sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99;backdrop-filter:blur(2px)}
+.menu-toggle{display:none;width:32px;height:32px;border:1px solid var(--border);border-radius:var(--r-sm);background:transparent;color:var(--text);cursor:pointer;align-items:center;justify-content:center}
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #sidebarOverlay.open{display:block}
+  #main{margin-left:0}
+  .menu-toggle{display:flex}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .charts-row,.settings-grid{grid-template-columns:1fr}
+  .table-search{width:160px}
+}
+
+/* ── Spinner ── */
+.spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--text2);border-radius:50%;animation:spin .7s linear infinite;margin:auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Refresh indicator ── */
+.refresh-indicator{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text3);opacity:0;transition:opacity .3s}
+.refresh-indicator.show{opacity:1}
+
+/* ── Dev banner ── */
+.dev-banner{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--r-sm);padding:10px 14px;font-size:12.5px;color:var(--yellow);display:flex;align-items:center;gap:10px;margin-bottom:20px}
+
+/* ── Order detail ── */
+.order-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.detail-block{background:var(--card2);padding:12px;border-radius:8px}
+.detail-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:500}
+.detail-value{font-size:13.5px;font-weight:500}
+
+/* ── Banner preview card ── */
+.banner-preview{background:linear-gradient(135deg,#1c1c2e,#16213e);border-radius:12px;padding:20px;position:relative;overflow:hidden;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end}
+.banner-preview-img{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.5;border-radius:12px}
+.banner-preview-content{position:relative;z-index:1}
+.banner-preview-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.banner-preview-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:2px}
+.banner-preview-sub{font-size:12px;color:rgba(255,255,255,.6)}
+</style>
+</head>
+<body>
+
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i data-lucide="chef-hat" style="width:18px;height:18px"></i></div>
+    <div>
+      <div class="logo-text" id="sidebarRestName">{{ restaurant_name }} Admin</div>
+      <div class="logo-sub">Boshqaruv paneli</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Umumiy</div>
+    <button class="nav-btn active" id="nav-dashboard" onclick="showSection('dashboard')">
+      <div class="nav-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i></div> Dashboard
+    </button>
+    <button class="nav-btn" id="nav-orders" onclick="showSection('orders')">
+      <div class="nav-icon"><i data-lucide="shopping-bag" style="width:17px;height:17px"></i></div> Buyurtmalar
+      <span class="nav-badge" id="pendingBadge" style="display:none">0</span>
+    </button>
+
+    <div class="nav-section-label">Menyu</div>
+    <button class="nav-btn" id="nav-menu" onclick="showSection('menu')">
+      <div class="nav-icon"><i data-lucide="utensils" style="width:17px;height:17px"></i></div> Mahsulotlar
+    </button>
+    <button class="nav-btn" id="nav-categories" onclick="showSection('categories')">
+      <div class="nav-icon"><i data-lucide="layers" style="width:17px;height:17px"></i></div> Kategoriyalar
+    </button>
+    <button class="nav-btn" id="nav-banners" onclick="showSection('banners')">
+      <div class="nav-icon"><i data-lucide="image" style="width:17px;height:17px"></i></div> Bannerlar
+    </button>
+
+    <div class="nav-section-label">Foydalanuvchilar</div>
+    <button class="nav-btn" id="nav-staff" onclick="showSection('staff')">
+      <div class="nav-icon"><i data-lucide="users" style="width:17px;height:17px"></i></div> Xodimlar
+    </button>
+    <button class="nav-btn" id="nav-customers" onclick="showSection('customers')">
+      <div class="nav-icon"><i data-lucide="contact" style="width:17px;height:17px"></i></div> Mijozlar
+    </button>
+    <button class="nav-btn" id="nav-reviews" onclick="showSection('reviews')">
+      <div class="nav-icon"><i data-lucide="star" style="width:17px;height:17px"></i></div> Reytinglar
+    </button>
+
+    <div class="nav-section-label">Tizim</div>
+    <button class="nav-btn" id="nav-settings" onclick="showSection('settings')">
+      <div class="nav-icon"><i data-lucide="settings" style="width:17px;height:17px"></i></div> Sozlamalar
+    </button>
+    <a href="/admin/" target="_blank" style="text-decoration:none">
+      <button class="nav-btn"><div class="nav-icon"><i data-lucide="database" style="width:17px;height:17px"></i></div> Django Admin</button>
+    </a>
+    <a href="/miniapp/customer/" target="_blank" style="text-decoration:none">
+      <button class="nav-btn"><div class="nav-icon"><i data-lucide="smartphone" style="width:17px;height:17px"></i></div> Mijoz ilova</button>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="user-ava">{% if user %}{{ user.first_name|first|default:"A" }}{% else %}A{% endif %}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600">{% if user %}{{ user.first_name }} {{ user.last_name }}{% else %}Admin{% endif %}</div>
+        <div style="font-size:11px;color:var(--text3)">{{ user.get_role_display|default:"Direktor" }}</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div id="main">
+  <header class="main-header">
+    <button class="menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:18px;height:18px"></i></button>
+    <span class="page-title" id="pageTitle"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i> Dashboard</span>
+    <div class="header-right">
+      <span id="autoRefreshIndicator" class="refresh-indicator"><i data-lucide="refresh-ccw" style="width:11px;height:11px"></i> Yangilanmoqda...</span>
+      <button class="header-btn" onclick="refreshCurrent()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Yangilash</button>
+      <button class="header-btn primary" id="headerAddBtn" onclick="headerAdd()" style="display:none"><i data-lucide="plus" style="width:14px;height:14px"></i> <span id="headerAddText">Qo'shish</span></button>
+    </div>
+  </header>
+
+  <div class="main-content">
+    {% if dev_mode %}
+    <div class="dev-banner"><i data-lucide="alert-triangle" style="width:15px;height:15px"></i> DEV rejimi yoniq — Telegram auth tekshirilmaydi. Production uchun Sozlamalar → DEV rejimi ni o'chiring.</div>
+    {% endif %}
+
+    <!-- ========== DASHBOARD ========== -->
+    <div class="section active" id="sec-dashboard">
+      <div class="stats-grid" id="statsGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:40px"><div class="spinner"></div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Haftalik buyurtmalar <span id="chartSubtitle">So'nggi 7 kun</span></div>
+          <canvas id="ordersChart" height="100"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Bugungi holat</div>
+          <canvas id="statusChart" height="180"></canvas>
+          <div id="statusLegend" style="margin-top:10px"></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title"><i data-lucide="clock" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:6px"></i>Oxirgi buyurtmalar</span>
+          <button class="header-btn" onclick="showSection('orders')">Barchasini ko'rish →</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>#</th><th>Mijoz</th><th>Holat</th><th>Summa</th><th>Vaqt</th><th></th></tr></thead>
+            <tbody id="recentOrdersTbody"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3)">Yuklanmoqda...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ORDERS ========== -->
+    <div class="section" id="sec-orders">
+      <div class="filter-tabs" id="orderFilters">
+        <button class="filter-tab active" onclick="filterOrders('all','today',this)">Bugungi barchasi</button>
+        <button class="filter-tab" onclick="filterOrders('yangi','today',this)">🆕 Yangi</button>
+        <button class="filter-tab" onclick="filterOrders('qabul_qilindi','today',this)">✅ Qabul</button>
+        <button class="filter-tab" onclick="filterOrders('tayyorlanmoqda','today',this)">👨‍🍳 Tayyorlanmoqda</button>
+        <button class="filter-tab" onclick="filterOrders('yolda','today',this)">🛵 Yo'lda</button>
+        <button class="filter-tab" onclick="filterOrders('yetkazildi','today',this)">🎉 Yetkazildi</button>
+        <button class="filter-tab" onclick="filterOrders('all','week',this)">📅 Haftalik</button>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title" id="ordersTableTitle">Buyurtmalar</span>
+          <input type="text" class="table-search" placeholder="ID yoki mijoz..." oninput="searchOrders(this.value)"/>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>#</th><th>Mijoz</th><th>Mahsulotlar</th><th>Summa</th><th>Holat</th><th>Vaqt</th><th>Amallar</th></tr></thead>
+            <tbody id="ordersTbody"><tr><td colspan="7" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MENU ========== -->
+    <div class="section" id="sec-menu">
+      <div class="filter-tabs" id="menuCatFilters">
+        <button class="filter-tab active" onclick="filterMenuByCat(null,this)">Barchasi</button>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Menyu mahsulotlari</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="text" class="table-search" placeholder="Qidirish..." oninput="searchMenu(this.value)"/>
+            <button class="header-btn primary" onclick="openAddItemModal()">+ Yangi mahsulot</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>Rasm</th><th>Nomi</th><th>Kategoriya</th><th>Narxi</th><th>Mavjud</th><th>Mashhur</th><th>Amallar</th></tr></thead>
+            <tbody id="menuTbody"><tr><td colspan="7" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== KATEGORIYALAR ========== -->
+    <div class="section" id="sec-categories">
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Kategoriyalar</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" class="table-search" placeholder="Qidirish..." oninput="searchCategories(this.value)"/>
+            <button class="header-btn primary" onclick="openAddCatModal()">+ Yangi kategoriya</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>Icon/Rasm</th><th>Nomi</th><th>Mahsulotlar</th><th>Tartib</th><th>Holat</th><th>Amallar</th></tr></thead>
+            <tbody id="categoriesTbody"><tr><td colspan="6" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== BANNERLAR ========== -->
+    <div class="section" id="sec-banners">
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Bannerlar</span>
+          <button class="header-btn primary" onclick="openAddBannerModal()">+ Yangi banner</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>Preview</th><th>Sarlavha</th><th>Yorliq</th><th>Tartib</th><th>Holat</th><th>Amallar</th></tr></thead>
+            <tbody id="bannersTbody"><tr><td colspan="6" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== XODIMLAR ========== -->
+    <div class="section" id="sec-staff">
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterStaff('all',this)">Barchasi</button>
+        <button class="filter-tab" onclick="filterStaff('director',this)">🎯 Direktorlar</button>
+        <button class="filter-tab" onclick="filterStaff('chef',this)">👨‍🍳 Oshpazlar</button>
+        <button class="filter-tab" onclick="filterStaff('courier',this)">🛵 Kuryerlar</button>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Xodimlar</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" class="table-search" placeholder="Qidirish..." oninput="searchStaff(this.value)"/>
+            <button class="header-btn primary" onclick="openAddStaffModal()">+ Xodim qo'shish</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>Ism</th><th>Rol</th><th>Telegram ID</th><th>Telefon</th><th>Faollik</th><th>Qo'shilgan</th><th>Amallar</th></tr></thead>
+            <tbody id="staffTbody"><tr><td colspan="7" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MIJOZLAR ========== -->
+    <div class="section" id="sec-customers">
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Mijozlar</span>
+          <input type="text" class="table-search" placeholder="Qidirish..." oninput="searchCustomers(this.value)"/>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>Ism</th><th>Telegram ID</th><th>Username</th><th>Telefon</th><th>Buyurtmalar</th><th>Qo'shilgan</th></tr></thead>
+            <tbody id="customersTbody"><tr><td colspan="6" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== REYTINGLAR ========== -->
+    <div class="section" id="sec-reviews">
+      <div class="stats-grid" id="reviewsStats">
+        <div class="stat-card"><div class="spinner"></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Mijoz reytinglari va izohlari</span>
+          <button class="header-btn" onclick="loadReviews()"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Yangilash</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bb-table">
+            <thead><tr><th>Buyurtma</th><th>Mijoz</th><th>Reyting</th><th>Izoh</th><th>Sana</th></tr></thead>
+            <tbody id="reviewsTbody"><tr><td colspan="5" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SOZLAMALAR ========== -->
+    <div class="section" id="sec-settings">
+      <div id="settingsContent"><div style="text-align:center;padding:60px"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODALS ══════ -->
+
+<!-- Menu Item Modal -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="itemModalTitle">Yangi mahsulot</span>
+      <button class="modal-close" onclick="closeModal('itemModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="itemId"/>
+      <div class="form-group">
+        <label class="form-label">Kategoriya *</label>
+        <select class="form-control" id="itemCategory"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mahsulot nomi *</label>
+        <input type="text" class="form-control" id="itemName" placeholder="Masalan: BekBurger Classic"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Narxi (so'm) *</label>
+          <input type="number" class="form-control" id="itemPrice" placeholder="35000"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tayyorlash vaqti (daqiqa)</label>
+          <input type="number" class="form-control" id="itemPrepTime" value="10"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tavsif</label>
+        <textarea class="form-control" id="itemDesc" rows="2" placeholder="Mahsulot haqida..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rasm</label>
+        <div class="img-preview-box" onclick="document.getElementById('itemImage').click()" id="itemImgPreview">
+          <div class="img-placeholder"><i data-lucide="upload" style="width:24px;height:24px"></i><span>Rasm yuklash</span></div>
+        </div>
+        <input type="file" id="itemImage" accept="image/*" style="display:none" onchange="previewImg('itemImage','itemImgPreview')"/>
+      </div>
+      <div style="display:flex;gap:24px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="itemAvailable" checked/> Mavjud
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="itemPopular"/> Mashhur 🔥
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="header-btn" onclick="closeModal('itemModal')">Bekor qilish</button>
+      <button class="header-btn primary" onclick="saveItem()" id="saveItemBtn">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Category Modal -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="catModalTitle">Yangi kategoriya</span>
+      <button class="modal-close" onclick="closeModal('catModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="catId"/>
+      <div class="form-group">
+        <label class="form-label">Kategoriya nomi *</label>
+        <input type="text" class="form-control" id="catName" placeholder="Masalan: Burgerlar"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Emoji / Icon</label>
+          <input type="text" class="form-control" id="catIcon" value="🍔" placeholder="🍔" style="font-size:22px"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tartib raqami</label>
+          <input type="number" class="form-control" id="catOrder" value="0"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rasm (ixtiyoriy)</label>
+        <div class="img-preview-box" onclick="document.getElementById('catImage').click()" id="catImgPreview">
+          <div class="img-placeholder"><i data-lucide="upload" style="width:24px;height:24px"></i><span>Rasm yuklash</span></div>
+        </div>
+        <input type="file" id="catImage" accept="image/*" style="display:none" onchange="previewImg('catImage','catImgPreview')"/>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="catActive" checked/> Faol
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="header-btn" onclick="closeModal('catModal')">Bekor qilish</button>
+      <button class="header-btn primary" onclick="saveCat()" id="saveCatBtn">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Banner Modal -->
+<div class="modal-overlay" id="bannerModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="bannerModalTitle">Yangi banner</span>
+      <button class="modal-close" onclick="closeModal('bannerModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="bannerId"/>
+      <div class="form-group">
+        <label class="form-label">Sarlavha *</label>
+        <input type="text" class="form-control" id="bannerTitle" placeholder="Masalan: BekBurger Classic" oninput="updateBannerPreview()"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Qo'shimcha matn</label>
+        <input type="text" class="form-control" id="bannerSubtitle" placeholder="Masalan: Tez va mazali yetkazib beramiz!" oninput="updateBannerPreview()"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Yorliq (Label)</label>
+          <input type="text" class="form-control" id="bannerLabel" value="🔥 BUGUNGI TAVSIYA" oninput="updateBannerPreview()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tartib raqami</label>
+          <input type="number" class="form-control" id="bannerOrder" value="0"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Banner rasmi</label>
+        <div class="img-preview-box" onclick="document.getElementById('bannerImage').click()" id="bannerImgPreview" style="height:160px;cursor:pointer">
+          <div class="img-placeholder"><i data-lucide="image" style="width:28px;height:28px"></i><span>Banner rasmi (16:9 yaxshi)</span></div>
+        </div>
+        <input type="file" id="bannerImage" accept="image/*" style="display:none" onchange="previewImg('bannerImage','bannerImgPreview');updateBannerPreview()"/>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="bannerActive" checked/> Faol
+        </label>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0"/>
+
+      <div class="form-label" style="margin-bottom:10px">Ko'rinish</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rasm joylashuvi</label>
+          <select class="form-control" id="bannerLayout" onchange="updateBannerPreview()">
+            <option value="image_right">Rasm o'ngda</option>
+            <option value="background">Rasm fon sifatida</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Avtomatik almashish (soniya)</label>
+          <input type="number" min="0" max="60" class="form-control" id="bannerDelay" value="0" oninput="updateBannerPreview()"/>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">0 = umumiy sozlama</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Gradient 1-rang</label>
+          <input type="color" class="form-control" id="bannerColorStart" value="#E63946" style="height:38px;padding:3px" oninput="updateBannerPreview()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gradient 2-rang</label>
+          <input type="color" class="form-control" id="bannerColorEnd" value="#F4A261" style="height:38px;padding:3px" oninput="updateBannerPreview()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Matn rangi</label>
+          <input type="color" class="form-control" id="bannerTextColor" value="#FFFFFF" style="height:38px;padding:3px" oninput="updateBannerPreview()"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Jonli ko'rinish</label>
+        <div id="bannerLivePreview" style="border-radius:10px;overflow:hidden;min-height:110px;padding:16px;position:relative"></div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0"/>
+
+      <div class="form-label" style="margin-bottom:10px">Tugma (ixtiyoriy)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tugma matni</label>
+          <input type="text" class="form-control" id="bannerButtonText" placeholder="Masalan: Menyuni ochish" oninput="updateBannerPreview()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amalga</label>
+          <select class="form-control" id="bannerButtonAction" onchange="updateBannerPreview()">
+            <option value="none">Amal yo'q</option>
+            <option value="call">Telefon qilish</option>
+            <option value="scroll_menu">Menyuni ochish</option>
+            <option value="open_url">Havolaga o'tish</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="bannerButtonValueWrap" style="display:none">
+        <label class="form-label">Qiymat (telefon yoki havola)</label>
+        <input type="text" class="form-control" id="bannerButtonValue" placeholder="tel:+998901234567 yoki https://..." oninput="updateBannerPreview()"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="header-btn" onclick="closeModal('bannerModal')">Bekor qilish</button>
+      <button class="header-btn primary" onclick="saveBanner()" id="saveBannerBtn">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff Modal -->
+<div class="modal-overlay" id="staffModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="staffModalTitle">Xodim qo'shish</span>
+      <button class="modal-close" onclick="closeModal('staffModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="staffId"/>
+      <div class="alert alert-info">💡 Xodim <b>@userinfobot</b> botiga /start yuborib Telegram ID'sini bilib oladi.</div>
+      <div class="form-group">
+        <label class="form-label">Telegram ID *</label>
+        <input type="number" class="form-control" id="staffTgId" placeholder="123456789"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ism *</label>
+          <input type="text" class="form-control" id="staffFirst" placeholder="Ism"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Familiya</label>
+          <input type="text" class="form-control" id="staffLast" placeholder="Familiya"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rol *</label>
+          <select class="form-control" id="staffRole">
+            <option value="chef">👨‍🍳 Oshpaz</option>
+            <option value="courier">🛵 Kuryer</option>
+            <option value="director">🎯 Direktor</option>
+            <option value="customer">👤 Mijoz</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefon</label>
+          <input type="text" class="form-control" id="staffPhone" placeholder="+998901234567"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="header-btn" onclick="closeModal('staffModal')">Bekor qilish</button>
+      <button class="header-btn primary" onclick="saveStaff()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-box" style="max-width:580px">
+    <div class="modal-header">
+      <span class="modal-title" id="orderModalTitle">Buyurtma #</span>
+      <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    </div>
+    <div class="modal-body" id="orderModalBody"></div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Tasdiqlash</span>
+      <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+    </div>
+    <div class="modal-body" id="confirmModalBody"></div>
+    <div class="modal-footer">
+      <button class="header-btn" onclick="closeModal('confirmModal')">Bekor qilish</button>
+      <button class="header-btn danger" id="confirmOkBtn">O'chirish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="dashToast" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── State ────────────────────────────────────────────────────────────
+const RESTAURANT = "{{ restaurant_name|escapejs }}";
+const CURRENCY   = "{{ currency|escapejs }}";
+const DS = {
+  currentSection: 'dashboard',
+  orders: [], ordersFilter: {status:'all', date:'today'},
+  menuItems: [], menuCats: [], menuCatFilter: null,
+  categories: [],
+  banners: [],
+  staff: [], staffFilter: 'all',
+  customers: [],
+  settings: [],
+  charts: {orders: null, status: null},
+  restaurantName: RESTAURANT,
+  currency: CURRENCY,
+};
+
+// ── CSRF / API ────────────────────────────────────────────────────────
+function csrf() {
+  return document.cookie.split(';').find(r=>r.trim().startsWith('csrftoken='))?.split('=')[1]||'';
+}
+async function api(url, opts={}) {
+  const isFormData = opts.body instanceof FormData;
+  const headers = isFormData ? {'X-CSRFToken':csrf()} : {'Content-Type':'application/json','X-CSRFToken':csrf()};
+  const res = await fetch(url, {headers, ...opts});
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────
+function toast(msg, type='success') {
+  const c=document.getElementById('dashToast');
+  const t=document.createElement('div');
+  const colors={success:'var(--green)',error:'var(--red)',info:'var(--blue)'};
+  const icons={success:'✅',error:'❌',info:'ℹ️'};
+  t.style.cssText=`background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);transition:all .3s;max-width:300px;pointer-events:auto;`;
+  t.innerHTML=`<span>${icons[type]}</span><span style="color:${colors[type]}">${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(12px)';setTimeout(()=>t.remove(),300);},3200);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────
+const SECTION_TITLES={
+  dashboard:'Dashboard', orders:'Buyurtmalar', menu:'Menyu mahsulotlari',
+  categories:'Kategoriyalar', banners:'Bannerlar',
+  staff:'Xodimlar', customers:'Mijozlar', reviews:'Reytinglar', settings:'Sozlamalar'
+};
+const SECTION_ICONS={
+  dashboard:'layout-dashboard', orders:'shopping-bag', menu:'utensils',
+  categories:'layers', banners:'image', staff:'users', customers:'contact',
+  reviews:'star', settings:'settings'
+};
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`sec-${name}`)?.classList.add('active');
+  document.getElementById(`nav-${name}`)?.classList.add('active');
+  
+  const icon = SECTION_ICONS[name]||'circle';
+  document.getElementById('pageTitle').innerHTML=`<i data-lucide="${icon}" style="width:17px;height:17px"></i> ${SECTION_TITLES[name]||name}`;
+  lucide.createIcons();
+  DS.currentSection=name;
+
+  const addBtn=document.getElementById('headerAddBtn');
+  const addText=document.getElementById('headerAddText');
+  if(name==='menu'){addBtn.style.display='flex';addText.textContent='Mahsulot';}
+  else if(name==='categories'){addBtn.style.display='flex';addText.textContent='Kategoriya';}
+  else if(name==='banners'){addBtn.style.display='flex';addText.textContent='Banner';}
+  else if(name==='staff'){addBtn.style.display='flex';addText.textContent='Xodim';}
+  else addBtn.style.display='none';
+
+  if(name==='dashboard') loadDashboard();
+  else if(name==='orders') loadOrders();
+  else if(name==='menu') loadMenu();
+  else if(name==='categories') loadCategories();
+  else if(name==='banners') loadBanners();
+  else if(name==='staff') loadUsers('chef');
+  else if(name==='customers') loadUsers('customer');
+  else if(name==='reviews') loadReviews();
+  else if(name==='settings') loadSettings();
+  
+  closeSidebar();
+}
+function headerAdd(){
+  if(DS.currentSection==='menu') openAddItemModal();
+  else if(DS.currentSection==='categories') openAddCatModal();
+  else if(DS.currentSection==='banners') openAddBannerModal();
+  else if(DS.currentSection==='staff') openAddStaffModal();
+}
+function refreshCurrent(){showSection(DS.currentSection);}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
+
+// ── Image preview ─────────────────────────────────────────────────────
+function previewImg(inputId, previewId) {
+  const file = document.getElementById(inputId).files[0];
+  if (!file) return;
+  const box = document.getElementById(previewId);
+  const reader = new FileReader();
+  reader.onload = e => {
+    box.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const d = await api('/api/dashboard/stats/');
+    renderStats(d.today, d.active_couriers);
+    renderCharts(d.chart, d.today);
+    renderRecentOrders(d.recent_orders);
+    const pending=d.today.pending+d.today.in_progress;
+    const badge=document.getElementById('pendingBadge');
+    if(pending>0){badge.textContent=pending;badge.style.display='flex';}
+    else badge.style.display='none';
+  } catch(e){ toast('Stats yuklanmadi: '+e.message,'error'); }
+}
+function renderStats(t, couriers) {
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card blue">
+      <div class="stat-icon"><i data-lucide="shopping-bag" style="width:18px;height:18px;color:var(--blue)"></i></div>
+      <div class="stat-value">${t.orders}</div>
+      <div class="stat-label">Bugungi buyurtmalar</div>
+      <div class="stat-delta up"><i data-lucide="check-circle-2" style="width:13px;height:13px"></i> ${t.delivered} ta yetkazildi</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon"><i data-lucide="trending-up" style="width:18px;height:18px;color:var(--green)"></i></div>
+      <div class="stat-value">${fmtNum(t.revenue)}</div>
+      <div class="stat-label">Bugungi daromad (${CURRENCY})</div>
+      <div class="stat-delta up">Yetkazilgan buyurtmalardan</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-icon"><i data-lucide="clock" style="width:18px;height:18px;color:var(--yellow)"></i></div>
+      <div class="stat-value">${t.pending + t.in_progress}</div>
+      <div class="stat-label">Jarayondagi buyurtmalar</div>
+      <div class="stat-delta">${t.pending} yangi, ${t.in_progress} tayyorlanmoqda</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-icon"><i data-lucide="truck" style="width:18px;height:18px;color:var(--purple)"></i></div>
+      <div class="stat-value">${couriers}</div>
+      <div class="stat-label">Faol kuryerlar</div>
+      <div class="stat-delta">Ro'yxatda</div>
+    </div>`;
+  lucide.createIcons();
+}
+function renderCharts(chartData, today) {
+  const ctx1=document.getElementById('ordersChart').getContext('2d');
+  if(DS.charts.orders) DS.charts.orders.destroy();
+  DS.charts.orders=new Chart(ctx1,{
+    type:'bar',
+    data:{labels:chartData.map(d=>d.date),datasets:[{label:'Buyurtmalar',data:chartData.map(d=>d.orders),backgroundColor:'rgba(59,130,246,.4)',borderColor:'#3b82f6',borderWidth:1.5,borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#52525b'}},x:{grid:{display:false},ticks:{color:'#52525b'}}}}
+  });
+  const ctx2=document.getElementById('statusChart').getContext('2d');
+  if(DS.charts.status) DS.charts.status.destroy();
+  const labels=['Yangi','Jarayonda','Yetkazildi'];
+  const data=[today.pending,today.in_progress,today.delivered];
+  const colors=['#3b82f6','#f59e0b','#10b981'];
+  DS.charts.status=new Chart(ctx2,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,plugins:{legend:{display:false}},cutout:'68%'}
+  });
+  document.getElementById('statusLegend').innerHTML=labels.map((l,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${colors[i]}"></div>
+      <span style="font-size:12px;color:var(--text2)">${l}</span>
+      <span style="margin-left:auto;font-size:12px;font-weight:600">${data[i]}</span>
+    </div>`).join('');
+}
+function renderRecentOrders(orders) {
+  const tb=document.getElementById('recentOrdersTbody');
+  if(!orders.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><i data-lucide="inbox" style="width:48px;height:48px;stroke-width:1.5"></i></div><div class="empty-text">Buyurtma yo'q</div></div></td></tr>`;lucide.createIcons();return;}
+  tb.innerHTML=orders.map(o=>`
+    <tr>
+      <td><b style="color:var(--text2)">#${o.id}</b></td>
+      <td>${esc(o.customer)}</td>
+      <td><span class="badge-status bs-${o.status}">${o.status_display}</span></td>
+      <td><b>${fmtNum(o.total)}</b></td>
+      <td style="color:var(--text3);font-size:12px">${o.created_at}</td>
+      <td><button class="act-btn" onclick='showOrderDetail(${JSON.stringify(o)})'><i data-lucide="eye" style="width:14px;height:14px"></i></button></td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+// ── Orders ────────────────────────────────────────────────────────────
+async function loadOrders(silent=false) {
+  const {status,date}=DS.ordersFilter;
+  if(!silent) document.getElementById('ordersTbody').innerHTML=`<tr><td colspan="7" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr>`;
+  try {
+    const d=await api(`/api/dashboard/orders/?status=${status}&date=${date}`);
+    DS.orders=d.orders;
+    renderOrdersTable(DS.orders);
+    document.getElementById('ordersTableTitle').textContent=`Buyurtmalar (${DS.orders.length} ta)`;
+  } catch(e){ toast('Buyurtmalar yuklanmadi','error'); }
+}
+function filterOrders(status,date,el){
+  document.querySelectorAll('#orderFilters .filter-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); DS.ordersFilter={status,date}; loadOrders();
+}
+function searchOrders(q){
+  renderOrdersTable(DS.orders.filter(o=>String(o.id).includes(q)||o.customer_name.toLowerCase().includes(q.toLowerCase())));
+}
+function renderOrdersTable(orders){
+  const tb=document.getElementById('ordersTbody');
+  if(!orders.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i data-lucide="inbox" style="width:48px;height:48px;stroke-width:1.5"></i></div><div class="empty-text">Buyurtmalar topilmadi</div></div></td></tr>`;lucide.createIcons();return;}
+  tb.innerHTML=orders.map(o=>`
+    <tr>
+      <td><b>#${o.id}</b></td>
+      <td>
+        <div style="font-weight:500">${esc(o.customer_name)}</div>
+        <div style="font-size:11px;color:var(--text3)">${esc(o.customer_phone)}</div>
+      </td>
+      <td style="max-width:180px">
+        <div style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${o.items.slice(0,2).map(it=>`${it.name} x${it.quantity}`).join(', ')}${o.items.length>2?` +${o.items.length-2}`:''}
+        </div>
+      </td>
+      <td><b>${fmtNum(o.total)}</b></td>
+      <td>
+        <select class="status-select" onchange="changeOrderStatus(${o.id},this.value,this)" data-orig="${o.status}">
+          ${getStatusOptions(o.status,o.valid_transitions)}
+        </select>
+      </td>
+      <td style="color:var(--text3);font-size:11.5px">${o.created_at}</td>
+      <td><button class="act-btn" onclick='showOrderDetail(${JSON.stringify(o)})'>👁️</button></td>
+    </tr>`).join('');
+}
+function getStatusOptions(current,validNext=[]){
+  const ALL=[['yangi','🆕 Yangi'],['qabul_qilindi','✅ Qabul'],['tayyorlanmoqda','👨‍🍳 Tayyorlanmoqda'],['tayyor','📦 Tayyor'],['yolda','🛵 Yo\'lda'],['yetkazildi','🎉 Yetkazildi'],['bekor_qilindi','❌ Bekor']];
+  return ALL.map(([v,l])=>`<option value="${v}" ${v===current?'selected':''} ${v!==current&&!validNext.includes(v)?'disabled':''}>${l}</option>`).join('');
+}
+async function changeOrderStatus(id,newStatus,sel){
+  const orig=sel.dataset.orig;
+  try{
+    await api(`/api/dashboard/orders/${id}/status/`,{method:'POST',body:JSON.stringify({status:newStatus})});
+    sel.dataset.orig=newStatus;
+    toast(`Buyurtma #${id} holati o'zgartirildi`,'success');
+    setTimeout(loadDashboard,600);
+  }catch(e){sel.value=orig;toast('Xatolik: '+e.message,'error');}
+}
+function showOrderDetail(o){
+  document.getElementById('orderModalTitle').textContent=`Buyurtma #${o.id}`;
+  document.getElementById('orderModalBody').innerHTML=`
+    <div class="order-detail-grid">
+      <div class="detail-block"><div class="detail-label">Mijoz</div><div class="detail-value">${esc(o.customer_name)}</div><div style="font-size:12px;color:var(--text3)">${esc(o.customer_phone)}</div></div>
+      <div class="detail-block"><div class="detail-label">Holat</div><span class="badge-status bs-${o.status}">${o.status_icon} ${o.status_display}</span></div>
+      ${o.chef?`<div class="detail-block"><div class="detail-label">Oshpaz</div><div class="detail-value">👨‍🍳 ${esc(o.chef)}</div></div>`:''}
+      ${o.courier?`<div class="detail-block"><div class="detail-label">Kuryer</div><div class="detail-value">🛵 ${esc(o.courier)}</div></div>`:''}
+    </div>
+    ${o.address?`<div class="detail-block" style="margin-bottom:10px"><div class="detail-label">Manzil</div><div class="detail-value">📍 ${esc(o.address)}</div></div>`:''}
+    ${o.note?`<div class="detail-block" style="margin-bottom:10px"><div class="detail-label">Izoh</div><div>${esc(o.note)}</div></div>`:''}
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin:14px 0 8px">Mahsulotlar:</div>
+    ${o.items.map(it=>`
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span>${esc(it.name)} <span style="color:var(--text3)">x${it.quantity}</span></span>
+        <span style="font-weight:600">${fmtNum(it.subtotal)}</span>
+      </div>`).join('')}
+    <div style="display:flex;justify-content:space-between;padding:12px 0 0;font-size:16px;font-weight:700">
+      <span>JAMI</span><span style="color:var(--green)">${money(o.total)}</span>
+    </div>
+    ${o.valid_transitions.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      ${o.valid_transitions.map(s=>`<button class="header-btn primary" onclick="changeOrderStatusDirect(${o.id},'${s}')" style="font-size:12px;padding:6px 12px">${getStatusLabel(s)}</button>`).join('')}
+    </div>`:''}`
+  ;openModal('orderModal');
+}
+async function changeOrderStatusDirect(id,status){
+  try{await api(`/api/dashboard/orders/${id}/status/`,{method:'POST',body:JSON.stringify({status})});closeModal('orderModal');toast(`Buyurtma #${id} yangilandi`,'success');loadOrders();}catch(e){toast(e.message,'error');}
+}
+function getStatusLabel(s){const m={yangi:'🆕 Yangi',qabul_qilindi:'✅ Qabul qilish',tayyorlanmoqda:'👨‍🍳 Tayyor qilish',tayyor:'📦 Tayyor',yolda:'🛵 Yo\'lga',yetkazildi:'🎉 Yetkazildi',bekor_qilindi:'❌ Bekor qilish'};return m[s]||s;}
+
+// ── Menu ──────────────────────────────────────────────────────────────
+async function loadMenu(){
+  document.getElementById('menuTbody').innerHTML=`<tr><td colspan="7" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr>`;
+  try{
+    const d=await api('/api/dashboard/menu/items/');
+    DS.menuItems=d.items; DS.menuCats=d.categories;
+    const cf=document.getElementById('menuCatFilters');
+    cf.innerHTML=`<button class="filter-tab ${DS.menuCatFilter===null?'active':''}" onclick="filterMenuByCat(null,this)">Barchasi</button>`
+      +d.categories.map(c=>`<button class="filter-tab ${DS.menuCatFilter===c.id?'active':''}" onclick="filterMenuByCat(${c.id},this)">${c.icon} ${c.name}</button>`).join('');
+    document.getElementById('itemCategory').innerHTML=d.categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    renderMenu(DS.menuItems);
+  }catch(e){toast('Menyu yuklanmadi','error');}
+}
+function filterMenuByCat(id,el){
+  document.querySelectorAll('#menuCatFilters .filter-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');DS.menuCatFilter=id;
+  renderMenu(id?DS.menuItems.filter(it=>it.category_id===id):DS.menuItems);
+}
+function searchMenu(q){
+  const f=DS.menuItems.filter(it=>it.name.toLowerCase().includes(q.toLowerCase()));
+  renderMenu(DS.menuCatFilter?f.filter(it=>it.category_id===DS.menuCatFilter):f);
+}
+function renderMenu(items){
+  const tb=document.getElementById('menuTbody');
+  if(!items.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i data-lucide="inbox" style="width:48px;height:48px;stroke-width:1.5"></i></div><div class="empty-text">Mahsulotlar topilmadi</div></div></td></tr>`;lucide.createIcons();return;}
+  tb.innerHTML=items.map(i=>`
+    <tr>
+      <td>${i.image_url?`<img src="${i.image_url}" class="table-img"/>`:`<div class="img-emoji">${DS.menuCats.find(c=>c.id===i.category_id)?.icon||'🍽️'}</div>`}</td>
+      <td>
+        <div style="font-weight:600">${esc(i.name)}</div>
+        <div style="font-size:11px;color:var(--text3)">${esc((i.description||'').substring(0,50))}${(i.description||'').length>50?'...':''}</div>
+      </td>
+      <td><span class="badge-pill">${esc(i.category_name)}</span></td>
+      <td><b>${fmtNum(i.price)}</b></td>
+      <td>
+        <label class="toggle-switch">
+          <input type="checkbox" ${i.is_available?'checked':''} onchange="toggleAvail(${i.id},this.checked)"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </td>
+      <td><span style="font-size:16px">${i.is_popular?'🔥':'—'}</span></td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="act-btn edit" onclick="openEditItemModal(${i.id})" title="Tahrirlash"><i data-lucide="edit-2" style="width:13px;height:13px"></i></button>
+          <button class="act-btn del" onclick="confirmDelete('item',${i.id},'${esc(i.name)}')" title="O'chirish"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+async function toggleAvail(id,val){
+  try{await api(`/api/dashboard/menu/items/${id}/`,{method:'PUT',body:JSON.stringify({is_available:val})});toast(val?'Mavjud qilindi':'Mavjud emas','success');}catch(e){toast(e.message,'error');loadMenu();}
+}
+function openAddItemModal(){
+  document.getElementById('itemId').value='';
+  document.getElementById('itemModalTitle').textContent='Yangi mahsulot';
+  document.getElementById('itemName').value='';
+  document.getElementById('itemPrice').value='';
+  document.getElementById('itemDesc').value='';
+  document.getElementById('itemPrepTime').value='10';
+  document.getElementById('itemAvailable').checked=true;
+  document.getElementById('itemPopular').checked=false;
+  document.getElementById('itemImage').value='';
+  document.getElementById('itemImgPreview').innerHTML=`<div class="img-placeholder"><i data-lucide="upload" style="width:24px;height:24px"></i><span>Rasm yuklash</span></div>`;
+  lucide.createIcons();
+  openModal('itemModal');
+}
+function openEditItemModal(id){
+  const it=DS.menuItems.find(i=>i.id===id);if(!it)return;
+  document.getElementById('itemId').value=it.id;
+  document.getElementById('itemModalTitle').textContent='Mahsulotni tahrirlash';
+  document.getElementById('itemCategory').value=it.category_id;
+  document.getElementById('itemName').value=it.name;
+  document.getElementById('itemPrice').value=it.price;
+  document.getElementById('itemDesc').value=it.description||'';
+  document.getElementById('itemPrepTime').value=it.preparation_time;
+  document.getElementById('itemAvailable').checked=it.is_available;
+  document.getElementById('itemPopular').checked=it.is_popular;
+  document.getElementById('itemImage').value='';
+  if(it.image_url){
+    document.getElementById('itemImgPreview').innerHTML=`<img src="${it.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`;
+  } else {
+    document.getElementById('itemImgPreview').innerHTML=`<div class="img-placeholder"><i data-lucide="upload" style="width:24px;height:24px"></i><span>Rasm yuklash</span></div>`;
+    lucide.createIcons();
+  }
+  openModal('itemModal');
+}
+async function saveItem(){
+  const id=document.getElementById('itemId').value;
+  const fd=new FormData();
+  fd.append('category_id',document.getElementById('itemCategory').value);
+  fd.append('name',document.getElementById('itemName').value);
+  fd.append('price',document.getElementById('itemPrice').value);
+  fd.append('description',document.getElementById('itemDesc').value);
+  fd.append('preparation_time',document.getElementById('itemPrepTime').value);
+  fd.append('is_available',document.getElementById('itemAvailable').checked);
+  fd.append('is_popular',document.getElementById('itemPopular').checked);
+  const imgFile=document.getElementById('itemImage').files[0];
+  if(imgFile) fd.append('image',imgFile);
+  const btn=document.getElementById('saveItemBtn');btn.textContent='⏳...';btn.disabled=true;
+  try{
+    if(id) await fetch(`/api/dashboard/menu/items/${id}/`,{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    else await fetch('/api/dashboard/menu/items/',{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    toast(id?'Mahsulot yangilandi':'Mahsulot qo\'shildi','success');
+    closeModal('itemModal');loadMenu();
+  }catch(e){toast(e.message,'error');}
+  finally{btn.textContent='Saqlash';btn.disabled=false;}
+}
+
+// ── Categories ────────────────────────────────────────────────────────
+async function loadCategories(){
+  document.getElementById('categoriesTbody').innerHTML=`<tr><td colspan="6" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr>`;
+  try{
+    const d=await api('/api/dashboard/menu/categories/');
+    DS.categories=d.categories;
+    renderCategories(DS.categories);
+  }catch(e){toast('Kategoriyalar yuklanmadi','error');}
+}
+function searchCategories(q){
+  renderCategories(DS.categories.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())));
+}
+function renderCategories(cats){
+  const tb=document.getElementById('categoriesTbody');
+  if(!cats.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><i data-lucide="inbox" style="width:48px;height:48px;stroke-width:1.5"></i></div><div class="empty-text">Kategoriyalar topilmadi</div></div></td></tr>`;lucide.createIcons();return;}
+  tb.innerHTML=cats.map(c=>`
+    <tr>
+      <td><div class="img-emoji" style="font-size:22px">${c.icon||'🍽️'}</div></td>
+      <td><div style="font-weight:600">${esc(c.name)}</div></td>
+      <td><span class="badge-pill">${c.item_count} ta mahsulot</span></td>
+      <td style="color:var(--text3)">${c.order}</td>
+      <td>
+        <label class="toggle-switch">
+          <input type="checkbox" ${c.is_active?'checked':''} onchange="toggleCatActive(${c.id},this.checked)"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="act-btn edit" onclick="openEditCatModal(${c.id})" title="Tahrirlash"><i data-lucide="edit-2" style="width:13px;height:13px"></i></button>
+          <button class="act-btn del" onclick="confirmDelete('cat',${c.id},'${esc(c.name)}')" title="O'chirish"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+async function toggleCatActive(id,val){
+  try{await fetch(`/api/dashboard/menu/categories/${id}/`,{method:'POST',headers:{'X-CSRFToken':csrf(),'Content-Type':'application/json'},body:JSON.stringify({is_active:val})});toast(val?'Faollashtirildi':'O\'chirildi','success');}catch(e){toast(e.message,'error');loadCategories();}
+}
+function openAddCatModal(){
+  document.getElementById('catId').value='';
+  document.getElementById('catModalTitle').textContent='Yangi kategoriya';
+  document.getElementById('catName').value='';
+  document.getElementById('catIcon').value='🍔';
+  document.getElementById('catOrder').value='0';
+  document.getElementById('catActive').checked=true;
+  document.getElementById('catImage').value='';
+  document.getElementById('catImgPreview').innerHTML=`<div class="img-placeholder"><i data-lucide="upload" style="width:24px;height:24px"></i><span>Rasm yuklash</span></div>`;
+  lucide.createIcons();
+  openModal('catModal');
+}
+function openEditCatModal(id){
+  const c=DS.categories.find(x=>x.id===id);if(!c)return;
+  document.getElementById('catId').value=c.id;
+  document.getElementById('catModalTitle').textContent='Kategoriyani tahrirlash';
+  document.getElementById('catName').value=c.name;
+  document.getElementById('catIcon').value=c.icon;
+  document.getElementById('catOrder').value=c.order;
+  document.getElementById('catActive').checked=c.is_active;
+  document.getElementById('catImage').value='';
+  document.getElementById('catImgPreview').innerHTML=`<div class="img-placeholder"><i data-lucide="upload" style="width:24px;height:24px"></i><span>Rasm yuklash</span></div>`;
+  lucide.createIcons();
+  openModal('catModal');
+}
+async function saveCat(){
+  const id=document.getElementById('catId').value;
+  const name=document.getElementById('catName').value.trim();
+  if(!name){toast('Kategoriya nomini kiriting','error');return;}
+  const fd=new FormData();
+  fd.append('name',name);
+  fd.append('icon',document.getElementById('catIcon').value.trim()||'🍔');
+  fd.append('order',document.getElementById('catOrder').value||0);
+  fd.append('is_active',document.getElementById('catActive').checked);
+  const imgFile=document.getElementById('catImage').files[0];
+  if(imgFile) fd.append('image',imgFile);
+  const btn=document.getElementById('saveCatBtn');btn.textContent='⏳...';btn.disabled=true;
+  try{
+    if(id) await fetch(`/api/dashboard/menu/categories/${id}/`,{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    else await fetch('/api/dashboard/menu/categories/',{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    toast(id?'Kategoriya yangilandi':'Kategoriya qo\'shildi','success');
+    closeModal('catModal');loadCategories();
+  }catch(e){toast(e.message,'error');}
+  finally{btn.textContent='Saqlash';btn.disabled=false;}
+}
+
+// ── Banners ───────────────────────────────────────────────────────────
+async function loadBanners(){
+  document.getElementById('bannersTbody').innerHTML=`<tr><td colspan="6" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr>`;
+  try{
+    const d=await api('/api/dashboard/banners/');
+    DS.banners=d.banners;
+    renderBanners(DS.banners);
+  }catch(e){toast('Bannerlar yuklanmadi','error');}
+}
+function renderBanners(banners){
+  const tb=document.getElementById('bannersTbody');
+  if(!banners.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><i data-lucide="image" style="width:48px;height:48px;stroke-width:1.5"></i></div><div class="empty-text">Bannerlar yo'q</div><div class="empty-sub">+ Yangi banner tugmasini bosing</div></div></td></tr>`;lucide.createIcons();return;}
+  tb.innerHTML=banners.map(b=>`
+    <tr>
+      <td style="min-width:160px">
+        <div class="banner-preview" style="min-height:80px;padding:12px;border-radius:8px">
+          ${b.image_url?`<img src="${b.image_url}" class="banner-preview-img"/>`:''}
+          <div class="banner-preview-content">
+            <div class="banner-preview-label" style="font-size:9px">${esc(b.label)}</div>
+            <div class="banner-preview-title" style="font-size:13px">${esc(b.title)}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div style="font-weight:600">${esc(b.title)}</div>
+        <div style="font-size:11px;color:var(--text3)">${esc(b.subtitle||'')}</div>
+      </td>
+      <td><span class="badge-pill">${esc(b.label)}</span></td>
+      <td style="color:var(--text3)">${b.order}</td>
+      <td>
+        <label class="toggle-switch">
+          <input type="checkbox" ${b.is_active?'checked':''} onchange="toggleBannerActive(${b.id},this.checked)"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="act-btn edit" onclick="openEditBannerModal(${b.id})" title="Tahrirlash"><i data-lucide="edit-2" style="width:13px;height:13px"></i></button>
+          <button class="act-btn del" onclick="confirmDelete('banner',${b.id},'${esc(b.title)}')" title="O'chirish"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+async function toggleBannerActive(id,val){
+  try{await api(`/api/dashboard/banners/${id}/`,{method:'POST',body:JSON.stringify({is_active:val})});toast(val?'Banner faollashtirildi':'Banner o\'chirildi','success');}catch(e){toast(e.message,'error');loadBanners();}
+}
+const BANNER_DEFAULTS={color_start:'#E63946',color_end:'#F4A261',text_color:'#FFFFFF',layout:'image_right',button_text:'',button_action:'none',button_value:'',autoplay_delay:0};
+function updateBannerPreview(){
+  const c1=document.getElementById('bannerColorStart').value||BANNER_DEFAULTS.color_start;
+  const c2=document.getElementById('bannerColorEnd').value||BANNER_DEFAULTS.color_end;
+  const tc=document.getElementById('bannerTextColor').value||BANNER_DEFAULTS.text_color;
+  const layout=document.getElementById('bannerLayout').value;
+  const title=document.getElementById('bannerTitle').value.trim();
+  const sub=document.getElementById('bannerSubtitle').value.trim();
+  const label=document.getElementById('bannerLabel').value.trim();
+  const img=document.getElementById('bannerImgPreview').querySelector('img');
+  const bg=`linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+  const btnTxt=document.getElementById('bannerButtonText').value.trim();
+  const action=document.getElementById('bannerButtonAction').value;
+  const wrap=document.getElementById('bannerButtonValueWrap');
+  wrap.style.display=(action==='call'||action==='open_url')?'block':'none';
+  const bStyle=`background:rgba(255,255,255,.22);color:${tc};border:1px solid rgba(255,255,255,.4);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;display:inline-block;margin-top:10px`;
+  const html=[
+    label?`<div style="display:inline-block;background:${tc};color:${c1};padding:3px 10px;border-radius:99px;font-size:10px;font-weight:800;margin-bottom:8px">${esc(label)}</div>`:'',
+    `<div style="font-size:17px;font-weight:800;color:${tc};line-height:1.2">${esc(title||'Banner sarlavhasi')}</div>`,
+    sub?`<div style="font-size:12px;color:${tc};opacity:.85;margin-top:4px">${esc(sub)}</div>`:'',
+    btnTxt?`<div style="${bStyle}">${esc(btnTxt)}</div>`:'',
+  ].join('');
+  const el=document.getElementById('bannerLivePreview');
+  if(layout==='background'&&img){
+    el.innerHTML=`<img src="${img.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"><div style="position:absolute;inset:0;background:linear-gradient(135deg,${c1}e6 0%,${c2}d9 100%)"></div><div style="position:relative">${html}</div>`;
+  }else if(img){
+    el.innerHTML=`<div style="display:flex;gap:12px;align-items:center"><div style="flex:1;min-width:0">${html}</div><img src="${img.src}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;flex-shrink:0"></div>`;
+  }else{
+    el.innerHTML=`<div style="background:${bg}">${html}</div>`;
+  }
+}
+function openAddBannerModal(){
+  document.getElementById('bannerId').value='';
+  document.getElementById('bannerModalTitle').textContent='Yangi banner';
+  document.getElementById('bannerTitle').value='';
+  document.getElementById('bannerSubtitle').value='';
+  document.getElementById('bannerLabel').value='🔥 BUGUNGI TAVSIYA';
+  document.getElementById('bannerOrder').value='0';
+  document.getElementById('bannerActive').checked=true;
+  document.getElementById('bannerImage').value='';
+  document.getElementById('bannerButtonText').value=BANNER_DEFAULTS.button_text;
+  document.getElementById('bannerButtonAction').value=BANNER_DEFAULTS.button_action;
+  document.getElementById('bannerButtonValue').value='';
+  document.getElementById('bannerLayout').value=BANNER_DEFAULTS.layout;
+  document.getElementById('bannerDelay').value=BANNER_DEFAULTS.autoplay_delay;
+  document.getElementById('bannerColorStart').value=BANNER_DEFAULTS.color_start;
+  document.getElementById('bannerColorEnd').value=BANNER_DEFAULTS.color_end;
+  document.getElementById('bannerTextColor').value=BANNER_DEFAULTS.text_color;
+  document.getElementById('bannerImgPreview').innerHTML=`<div class="img-placeholder"><i data-lucide="image" style="width:28px;height:28px"></i><span>Banner rasmi (16:9 yaxshi)</span></div>`;
+  lucide.createIcons();
+  updateBannerPreview();
+  openModal('bannerModal');
+}
+function openEditBannerModal(id){
+  const b=DS.banners.find(x=>x.id===id);if(!b)return;
+  document.getElementById('bannerId').value=b.id;
+  document.getElementById('bannerModalTitle').textContent='Bannerni tahrirlash';
+  document.getElementById('bannerTitle').value=b.title;
+  document.getElementById('bannerSubtitle').value=b.subtitle||'';
+  document.getElementById('bannerLabel').value=b.label||'🔥 BUGUNGI TAVSIYA';
+  document.getElementById('bannerOrder').value=b.order;
+  document.getElementById('bannerActive').checked=b.is_active;
+  document.getElementById('bannerImage').value='';
+  document.getElementById('bannerButtonText').value=b.button_text||'';
+  document.getElementById('bannerButtonAction').value=b.button_action||BANNER_DEFAULTS.button_action;
+  document.getElementById('bannerButtonValue').value=b.button_value||'';
+  document.getElementById('bannerLayout').value=b.layout||BANNER_DEFAULTS.layout;
+  document.getElementById('bannerDelay').value=b.autoplay_delay||0;
+  document.getElementById('bannerColorStart').value=b.color_start||BANNER_DEFAULTS.color_start;
+  document.getElementById('bannerColorEnd').value=b.color_end||BANNER_DEFAULTS.color_end;
+  document.getElementById('bannerTextColor').value=b.text_color||BANNER_DEFAULTS.text_color;
+  if(b.image_url){
+    document.getElementById('bannerImgPreview').innerHTML=`<img src="${b.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`;
+  } else {
+    document.getElementById('bannerImgPreview').innerHTML=`<div class="img-placeholder"><i data-lucide="image" style="width:28px;height:28px"></i><span>Banner rasmi (16:9 yaxshi)</span></div>`;
+    lucide.createIcons();
+  }
+  updateBannerPreview();
+  openModal('bannerModal');
+}
+async function saveBanner(){
+  const id=document.getElementById('bannerId').value;
+  const title=document.getElementById('bannerTitle').value.trim();
+  if(!title){toast('Sarlavha kiritilmagan','error');return;}
+  const action=document.getElementById('bannerButtonAction').value;
+  const bVal=document.getElementById('bannerButtonValue').value.trim();
+  if((action==='call'||action==='open_url')&&!bVal){toast('Tugma uchun qiymat kiriting','error');return;}
+  if(action==='open_url'){
+    // Server ham tekshiradi, lekin foydalanuvchiga darhol xabar beramiz
+    const low=bVal.toLowerCase();
+    if(low.startsWith('javascript:')||low.startsWith('data:')||low.startsWith('vbscript:')){
+      toast('Xavfsiz havola — faqat https:// manzillar qabul qilinadi','error');return;
+    }
+    if(!/^https?:\/\//i.test(bVal)){toast('Havola http:// yoki https:// bilan boshlanishi kerak','error');return;}
+  }
+  const fd=new FormData();
+  fd.append('title',title);
+  fd.append('subtitle',document.getElementById('bannerSubtitle').value);
+  fd.append('label',document.getElementById('bannerLabel').value||'🔥 BUGUNGI TAVSIYA');
+  fd.append('order',document.getElementById('bannerOrder').value||0);
+  fd.append('is_active',document.getElementById('bannerActive').checked);
+  fd.append('layout',document.getElementById('bannerLayout').value);
+  fd.append('color_start',document.getElementById('bannerColorStart').value);
+  fd.append('color_end',document.getElementById('bannerColorEnd').value);
+  fd.append('text_color',document.getElementById('bannerTextColor').value);
+  fd.append('autoplay_delay',document.getElementById('bannerDelay').value||0);
+  fd.append('button_text',document.getElementById('bannerButtonText').value.trim());
+  fd.append('button_action',action);
+  fd.append('button_value',bVal);
+  const imgFile=document.getElementById('bannerImage').files[0];
+  if(imgFile) fd.append('image',imgFile);
+  const btn=document.getElementById('saveBannerBtn');btn.textContent='⏳...';btn.disabled=true;
+  try{
+    const res=id?await fetch(`/api/dashboard/banners/${id}/`,{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd})
+                 :await fetch('/api/dashboard/banners/',{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||'Xatolik yuz berdi');}
+    toast(id?'Banner yangilandi':'Banner qo\'shildi','success');
+    closeModal('bannerModal');loadBanners();
+  }catch(e){toast(e.message,'error');}
+  finally{btn.textContent='Saqlash';btn.disabled=false;}
+}
+
+// ── Universal Delete ──────────────────────────────────────────────────
+function confirmDelete(type,id,name){
+  const typeNames={item:'mahsulot',cat:'kategoriya',banner:'banner'};
+  document.getElementById('confirmModalBody').innerHTML=`<p style="font-size:14px;line-height:1.7;color:var(--text2)">«<b style="color:var(--text)">${esc(name)}</b>» ${typeNames[type]||type}ni o'chirmoqchimisiz?<br><span style="font-size:12px;color:var(--red)">Bu amalni qaytarib bo'lmaydi.</span></p>`;
+  document.getElementById('confirmOkBtn').textContent='O\'chirish';
+  document.getElementById('confirmOkBtn').onclick=async()=>{
+    try{
+      if(type==='item') await api(`/api/dashboard/menu/items/${id}/`,{method:'DELETE'});
+      else if(type==='cat') await api(`/api/dashboard/menu/categories/${id}/`,{method:'DELETE'});
+      else if(type==='banner') await api(`/api/dashboard/banners/${id}/`,{method:'DELETE'});
+      toast('O\'chirildi','success');
+      closeModal('confirmModal');
+      if(type==='item') loadMenu();
+      else if(type==='cat') loadCategories();
+      else if(type==='banner') loadBanners();
+    }catch(e){toast(e.message,'error');}
+  };
+  openModal('confirmModal');
+}
+
+// ── Staff & Customers ─────────────────────────────────────────────────
+async function loadUsers(roleFilter='all'){
+  const isCustomer=roleFilter==='customer';
+  const tbId=isCustomer?'customersTbody':'staffTbody';
+  document.getElementById(tbId).innerHTML=`<tr><td colspan="${isCustomer?6:7}" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr>`;
+  try{
+    const url=isCustomer?'/api/dashboard/users/?role=customer':'/api/dashboard/users/?role='+DS.staffFilter;
+    const d=await api(url);
+    DS.staff=d.users;
+    renderUsers(d.users,isCustomer?'customer':'staff');
+  }catch(e){toast('Yuklanmadi','error');}
+}
+function filterStaff(role,el){
+  document.querySelectorAll('#sec-staff .filter-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');DS.staffFilter=role;loadUsers(role==='all'?'all':role);
+}
+function searchStaff(q){
+  renderUsers(DS.staff.filter(u=>u.name.toLowerCase().includes(q.toLowerCase())||String(u.telegram_id||'').includes(q)),'staff');
+}
+function searchCustomers(q){
+  renderUsers(DS.staff.filter(u=>u.name.toLowerCase().includes(q.toLowerCase())||String(u.telegram_id||'').includes(q)),'customer');
+}
+function renderUsers(users,role){
+  const isCustomer=role==='customer';
+  const tb=document.getElementById(isCustomer?'customersTbody':'staffTbody');
+  const cols=isCustomer?6:7;
+  if(!users.length){tb.innerHTML=`<tr><td colspan="${cols}"><div class="empty-state"><div class="empty-icon"><i data-lucide="inbox" style="width:48px;height:48px;stroke-width:1.5"></i></div><div class="empty-text">Topilmadi</div></div></td></tr>`;lucide.createIcons();return;}
+  tb.innerHTML=users.map(u=>`
+    <tr>
+      <td>
+        <div style="font-weight:600">${esc(u.name)}</div>
+        ${u.username?`<div style="font-size:11px;color:var(--text3)">@${esc(u.username)}</div>`:''}
+      </td>
+      ${!isCustomer?`<td><span class="badge-pill">${formatRole(u.role)}</span></td>`:''}
+      <td style="font-family:monospace;font-size:12px;color:var(--text3)">${u.telegram_id||'—'}</td>
+      ${isCustomer?`<td style="font-size:12px;color:var(--text3)">@${esc(u.username||'')}</td>`:''}
+      <td style="font-size:13px;color:var(--text2)">${esc(u.phone)}</td>
+      ${isCustomer?`<td><b>${u.orders_count}</b> <span style="color:var(--text3);font-size:12px">ta</span></td>`:`<td><span class="badge-pill ${u.is_active?'badge-green':'badge-red'}">${u.is_active?'Faol':'Blok'}</span></td>`}
+      <td style="font-size:11.5px;color:var(--text3)">${esc(u.joined)}</td>
+      ${!isCustomer?`<td>
+        <div style="display:flex;gap:5px">
+          <button class="act-btn edit" onclick="openEditStaffModal(${u.id})"><i data-lucide="edit-2" style="width:13px;height:13px"></i></button>
+          <button class="act-btn del" onclick="deactivateUser(${u.id},'${esc(u.name)}')"><i data-lucide="user-x" style="width:13px;height:13px"></i></button>
+        </div>
+      </td>`:''}
+    </tr>`).join('');
+  lucide.createIcons();
+}
+function formatRole(r){return{chef:'👨‍🍳 Oshpaz',courier:'🛵 Kuryer',director:'🎯 Direktor',customer:'👤 Mijoz'}[r]||r;}
+function openAddStaffModal(){
+  document.getElementById('staffId').value='';
+  document.getElementById('staffModalTitle').textContent='Xodim qo\'shish';
+  ['staffTgId','staffFirst','staffLast','staffPhone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('staffTgId').disabled=false;
+  openModal('staffModal');
+}
+function openEditStaffModal(id){
+  const u=DS.staff.find(s=>s.id===id);if(!u)return;
+  document.getElementById('staffId').value=u.id;
+  document.getElementById('staffModalTitle').textContent='Xodimni tahrirlash';
+  document.getElementById('staffTgId').value=u.telegram_id||'';
+  document.getElementById('staffTgId').disabled=true;
+  const parts=u.name.split(' ');
+  document.getElementById('staffFirst').value=parts[0]||'';
+  document.getElementById('staffLast').value=parts.slice(1).join(' ')||'';
+  document.getElementById('staffRole').value=u.role;
+  document.getElementById('staffPhone').value=u.phone!=='—'?u.phone:'';
+  openModal('staffModal');
+}
+async function saveStaff(){
+  const id=document.getElementById('staffId').value;
+  const body={telegram_id:document.getElementById('staffTgId').value,first_name:document.getElementById('staffFirst').value.trim(),last_name:document.getElementById('staffLast').value.trim(),role:document.getElementById('staffRole').value,phone:document.getElementById('staffPhone').value.trim()};
+  try{
+    if(id) await api(`/api/dashboard/users/${id}/`,{method:'PUT',body:JSON.stringify(body)});
+    else await api('/api/dashboard/users/',{method:'POST',body:JSON.stringify(body)});
+    toast(id?'Xodim yangilandi':'Xodim qo\'shildi','success');
+    closeModal('staffModal');
+    document.getElementById('staffTgId').disabled=false;
+    loadUsers(DS.staffFilter);
+  }catch(e){toast(e.message,'error');}
+}
+async function deactivateUser(id,name){
+  document.getElementById('confirmModalBody').innerHTML=`<p style="font-size:14px;line-height:1.7;color:var(--text2)">«<b style="color:var(--text)">${esc(name)}</b>» foydalanuvchisini deaktivatsiya qilasizmi?</p>`;
+  document.getElementById('confirmOkBtn').textContent='Deaktivatsiya';
+  document.getElementById('confirmOkBtn').onclick=async()=>{
+    try{await api(`/api/dashboard/users/${id}/`,{method:'DELETE'});toast('Deaktivatsiya qilindi','success');closeModal('confirmModal');loadUsers(DS.staffFilter);}catch(e){toast(e.message,'error');}
+  };
+  openModal('confirmModal');
+}
+
+// ── Reytinglar ────────────────────────────────────────────────────────
+function stars(n){
+  n=Math.max(0,Math.min(5,Math.round(Number(n)||0)));
+  return '⭐'.repeat(n)+'☆'.repeat(5-n);
+}
+async function loadReviews(){
+  document.getElementById('reviewsTbody').innerHTML=`<tr><td colspan="5" style="text-align:center;padding:30px"><div class="spinner"></div></td></tr>`;
+  try{
+    const d=await api('/api/dashboard/reviews/');
+    const st=d.stats||{total:0,average:0};
+    document.getElementById('reviewsStats').innerHTML=`
+      <div class="stat-card">
+        <div class="stat-label">O'rtacha reyting</div>
+        <div class="stat-value">${st.average||0}<span style="font-size:18px;color:var(--text3)"> / 5</span></div>
+        <div style="font-size:12px;color:var(--yellow);margin-top:4px">${stars(st.average)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Reytinglangan buyurtmalar</div>
+        <div class="stat-value">${fmtNum(st.total)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">5 yulduzli</div>
+        <div class="stat-value">${fmtNum((d.reviews||[]).filter(r=>Number(r.rating)===5).length)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Izohsiz</div>
+        <div class="stat-value">${fmtNum((d.reviews||[]).filter(r=>!(r.review||'').trim()).length)}</div>
+      </div>`;
+
+    lucide.createIcons();
+
+    const rows=d.reviews||[];
+    document.getElementById('reviewsTbody').innerHTML=rows.length?rows.map(r=>`
+      <tr>
+        <td><b>#${r.order_id}</b></td>
+        <td>${esc(r.customer||'—')}</td>
+        <td><span style="color:var(--yellow);white-space:nowrap">${stars(r.rating)}</span> <span style="color:var(--text3);font-size:12px">${r.rating}</span></td>
+        <td style="max-width:380px">${r.review?esc(r.review):'<span style="color:var(--text3)">—</span>'}</td>
+        <td style="white-space:nowrap;color:var(--text3)">${esc(r.created_at||'')}</td>
+      </tr>`).join('')
+      :`<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text3)">Hali reyting yo'q</td></tr>`;
+  }catch(e){toast('Reytinglar yuklanmadi','error');}
+}
+
+// ── Settings ──────────────────────────────────────────────────────────
+async function loadSettings(){
+  document.getElementById('settingsContent').innerHTML=`<div style="text-align:center;padding:60px"><div class="spinner"></div></div>`;
+  try{
+    const d=await api('/api/dashboard/settings/');
+    DS.settings=d.settings;
+    renderSettings(d.settings);
+  }catch(e){toast('Sozlamalar yuklanmadi','error');}
+}
+function renderSettings(settings){
+  const groups={
+    '🤖 Telegram Bot':['telegram_bot_token','telegram_miniapp_url'],
+    '🍔 Restoran':['restaurant_name','app_tagline','restaurant_address','phone','currency','working_hours'],
+    '🛵 Yetkazib berish':['delivery_fee','free_delivery_from','min_order_amount','max_delivery_km','auto_assign_courier','order_cancel_allowed'],
+    '🖼️ Bannerlar':['banner_autoplay','banner_interval'],
+    '⚙️ Tizim':['dev_mode'],
+  };
+  let html=`
+  <div class="alert alert-info" style="margin-bottom:20px">
+    💡 <b>Restoran nomi</b> va boshqa sozlamalar saqlangach, barcha joylarda dinamik yangilanadi.
+  </div>
+  <div class="settings-grid">`;
+  for(const[title,keys] of Object.entries(groups)){
+    const gs=settings.filter(s=>keys.includes(s.key));
+    if(!gs.length) continue;
+    html+=`<div class="settings-card"><div class="settings-card-header"><div class="settings-card-icon">${title.split(' ')[0]}</div><div><div class="settings-card-title">${title.split(' ').slice(1).join(' ')}</div><div class="settings-card-desc">Sozlamalarni o'zgartiring va saqlang</div></div></div>`;
+    html+=gs.map(s=>`
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-key">${s.label}</div>
+          ${s.description?`<div class="setting-desc">${esc(s.description)}</div>`:''}
+        </div>
+        ${renderSettingInput(s)}
+      </div>`).join('');
+    html+='</div>';
+  }
+  html+=`</div>
+  <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;padding:16px;background:var(--card);border-radius:var(--r);border:1px solid var(--border)">
+    <button class="header-btn" onclick="loadSettings()"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Bekor qilish</button>
+    <button class="header-btn primary" onclick="saveSettings()" style="padding:8px 24px"><i data-lucide="save" style="width:13px;height:13px"></i> Barcha sozlamalarni saqlash</button>
+  </div>`;
+  document.getElementById('settingsContent').innerHTML=html;
+  lucide.createIcons();
+}
+function renderSettingInput(s){
+  const id=`sval-${s.key}`;
+  if(s.setting_type==='boolean'){
+    const checked=s.value==='True'||s.value==='true'||s.value==='1';
+    return `<label class="toggle-switch"><input type="checkbox" id="${id}" ${checked?'checked':''}/><span class="toggle-slider"></span></label>`;
+  }
+  if(s.setting_type==='password'){
+    return `<input type="password" class="setting-input mono" id="${id}" value="${esc(s.value)}" placeholder="Token kiriting..."/>`;
+  }
+  if(s.setting_type==='number'){
+    return `<input type="number" class="setting-input" id="${id}" value="${esc(s.value)}"/>`;
+  }
+  return `<input type="text" class="setting-input" id="${id}" value="${esc(s.value)}" placeholder="${s.label}"/>`;
+}
+async function saveSettings(){
+  const payload={};
+  for(const s of DS.settings){
+    const el=document.getElementById(`sval-${s.key}`);
+    if(!el) continue;
+    if(s.setting_type==='boolean') payload[s.key]=el.checked?'True':'False';
+    else payload[s.key]=el.value;
+  }
+  try{
+    const d=await api('/api/dashboard/settings/',{method:'POST',body:JSON.stringify(payload)});
+    toast(`${d.updated?.length||0} ta sozlama saqlandi`,'success');
+    // Dynamically update restaurant name in sidebar and page title
+    if('restaurant_name' in payload && payload.restaurant_name){
+      DS.restaurantName=payload.restaurant_name;
+      document.getElementById('sidebarRestName').textContent=payload.restaurant_name+' Admin';
+      document.getElementById('pageTabTitle').textContent=payload.restaurant_name+' — Admin Dashboard';
+    }
+    // Valyuta o'zgarsa butun panelni yangilaymiz (barcha summalar qayta chiziladi)
+    if('currency' in payload && payload.currency && payload.currency!==DS.currency){
+      DS.currency=payload.currency;
+      toast(`Valyuta "${payload.currency}" ga o\'zgardi. Panel yangilanmoqda...`,'info');
+      setTimeout(()=>location.reload(),900);
+    }
+    if('dev_mode' in payload){
+      toast('DEV rejimi o\'zgardi. Server qayta ishga tushirilganda kuchga kiradi.','info');
+    }
+  }catch(e){toast(e.message,'error');}
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  ov.addEventListener('click',e=>{if(e.target===ov) ov.classList.remove('open');});
+});
+
+// ── Utils ─────────────────────────────────────────────────────────────
+function fmtNum(n){return new Intl.NumberFormat('uz-UZ').format(n||0);}
+function money(n){return `${fmtNum(n)} ${CURRENCY}`;}
+function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(String(s||'')));return d.innerHTML;}
+
+// ── Auto-refresh ──────────────────────────────────────────────────────
+setInterval(async()=>{
+  if(DS.currentSection==='dashboard'){
+    document.getElementById('autoRefreshIndicator')?.classList.add('show');
+    await loadDashboard();
+    setTimeout(()=>document.getElementById('autoRefreshIndicator')?.classList.remove('show'),1500);
+  } else if(DS.currentSection==='orders'){
+    document.getElementById('autoRefreshIndicator')?.classList.add('show');
+    await loadOrders(true);
+    setTimeout(()=>document.getElementById('autoRefreshIndicator')?.classList.remove('show'),1500);
+  }
+},15000);
+
+// ── Init ──────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  lucide.createIcons();
+  showSection('dashboard');
+  // Ilova boshqaruv paneli — sozlamalarni faqat o'zi boshqaradi,
+  // shuning uchun jonli kanal kerak emas; sidebar allaqachon serverdan render qilingan.
+});
+</script>
+</body>
+</html>

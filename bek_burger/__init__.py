@@ -1,0 +1,1 @@
+"""BekBurger Django project init."""

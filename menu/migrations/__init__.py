@@ -1,0 +1,1 @@
+"""Menu migrations init."""

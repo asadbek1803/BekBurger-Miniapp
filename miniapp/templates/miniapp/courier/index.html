@@ -1,0 +1,885 @@
+﻿<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{{ restaurant_name }} — Kuryer</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --accent:#10b981; --accent-light:#34d399; --accent-glow:rgba(16,185,129,.22);
+      --bg:#0c0e0c; --card:#131a14; --card2:#1c2420;
+      --border:rgba(255,255,255,.07);
+      --text:#f0f4f0; --text2:#9ca3af; --text3:#52525b;
+      --orange:#f97316; --blue:#3b82f6; --red:#ef4444; --yellow:#f59e0b; --purple:#8b5cf6;
+      --r:14px; --r-sm:10px; --tab-h:72px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+      padding-bottom:calc(var(--tab-h) + 12px);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+    /* Header */
+    .app-header{background:var(--card);padding:0 16px;height:58px;display:flex;align-items:center;
+      justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:1px solid var(--border)}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .app-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-light));
+      border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;
+      flex-shrink:0;box-shadow:0 3px 12px var(--accent-glow)}
+    .app-name{font-size:16px;font-weight:800;letter-spacing:-.3px}
+    .app-user{font-size:11px;color:var(--text3);margin-top:1px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .icon-btn{width:36px;height:36px;background:var(--card2);border:1px solid var(--border);
+      border-radius:9px;display:flex;align-items:center;justify-content:center;
+      font-size:15px;cursor:pointer;transition:.15s}
+    .icon-btn:active{transform:scale(.9)}
+    .live-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0;
+      box-shadow:0 0 0 3px rgba(16,185,129,.2);animation:livePulse 2s ease-in-out infinite}
+    @keyframes livePulse{0%,100%{box-shadow:0 0 0 3px rgba(16,185,129,.2)}50%{box-shadow:0 0 0 6px rgba(16,185,129,.08)}}
+
+    /* Stats */
+    .stats-banner{margin:12px 14px 0;background:linear-gradient(135deg,rgba(16,185,129,.09),rgba(52,211,153,.04));
+      border:1px solid rgba(16,185,129,.18);border-radius:var(--r);padding:14px 16px;
+      display:grid;grid-template-columns:1fr 1fr 1fr 1fr}
+    .stat-item{text-align:center;position:relative}
+    .stat-item:not(:last-child)::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);
+      width:1px;height:65%;background:rgba(255,255,255,.07)}
+    .stat-num{font-size:22px;font-weight:900;line-height:1;margin-bottom:3px;letter-spacing:-.8px}
+    .stat-num.orange{color:var(--orange)} .stat-num.green{color:var(--accent)}
+    .stat-num.blue{color:var(--blue)} .stat-num.purple{color:var(--purple)}
+    .stat-lbl{font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+
+    /* Pages */
+    .page{display:none}
+    .page.active{display:block;animation:pageIn .2s ease-out}
+    @keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Section header */
+    .sec-header{display:flex;align-items:center;justify-content:space-between;padding:16px 14px 10px}
+    .sec-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+    .sec-badge{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:100px}
+    .badge-orange{background:var(--orange);color:#fff} .badge-green{background:var(--accent);color:#fff}
+    .badge-blue{background:var(--blue);color:#fff} .badge-gray{background:var(--card2);color:var(--text2);border:1px solid var(--border)}
+
+    /* Order color palette for map markers */
+    :root{
+      --c0:#ef4444; --c1:#3b82f6; --c2:#f59e0b; --c3:#8b5cf6;
+      --c4:#06b6d4; --c5:#ec4899; --c6:#22c55e; --c7:#f97316;
+      --c8:#a855f7; --c9:#14b8a6;
+    }
+
+    /* Order card */
+    .order-card{margin:0 14px 10px;background:var(--card);border-radius:var(--r);
+      border:1px solid var(--border);overflow:hidden;animation:cardIn .25s ease-out}
+    @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .order-card.available{border-color:rgba(249,115,22,.25)}
+    .order-card.active-del{border-color:rgba(16,185,129,.3);box-shadow:0 0 0 1px rgba(16,185,129,.08)}
+
+    .card-bar{height:3px}
+    .bar-orange{background:linear-gradient(90deg,var(--orange),#fb923c)}
+    .bar-green{background:linear-gradient(90deg,var(--accent),var(--accent-light))}
+
+    .card-body{padding:14px}
+    .card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+    .order-num{font-size:17px;font-weight:900;letter-spacing:-.5px;display:flex;align-items:center;gap:8px}
+    .order-price{font-size:15px;font-weight:700;color:var(--accent);margin-top:2px}
+
+    /* Color tag for multi-order map identification */
+    .order-tag{
+      width:26px;height:26px;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:900;color:#fff;flex-shrink:0;
+    }
+
+    /* Step track */
+    .step-track{display:flex;align-items:center;background:var(--card2);border-radius:9px;
+      padding:11px 14px;margin-bottom:12px}
+    .step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+    .step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:13px;border:2px solid var(--border);background:var(--card);transition:.2s}
+    .step-dot.done{background:var(--accent);border-color:var(--accent);color:#fff}
+    .step-dot.current{background:var(--orange);border-color:var(--orange);animation:stepGlow 1.2s ease-in-out infinite}
+    @keyframes stepGlow{0%,100%{box-shadow:0 0 0 3px rgba(249,115,22,.2)}50%{box-shadow:0 0 0 7px rgba(249,115,22,.08)}}
+    .step-line{flex:1;height:2px;background:var(--border);margin:0 2px;margin-bottom:20px;transition:.3s}
+    .step-line.done{background:var(--accent)}
+    .step-lbl{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;text-align:center}
+
+    /* Info block */
+    .info-block{display:flex;align-items:flex-start;gap:10px;background:var(--card2);border-radius:9px;
+      padding:11px 12px;margin-bottom:8px;border:1px solid var(--border)}
+    .info-icon-box{width:32px;height:32px;border-radius:8px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;font-size:15px}
+    .ib-green{background:rgba(16,185,129,.14)} .ib-blue{background:rgba(59,130,246,.14)}
+    .ib-yellow{background:rgba(245,158,11,.1)} .ib-orange{background:rgba(249,115,22,.12)}
+    .info-label{font-size:9.5px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+    .info-value{font-size:13.5px;font-weight:600;line-height:1.4}
+
+    /* Item chips */
+    .items-wrap{background:var(--card2);border-radius:9px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--border)}
+    .items-wrap-title{font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+    .item-chip{display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);
+      border-radius:6px;padding:4px 8px;font-size:12px;font-weight:500;margin:3px 3px 0 0}
+    .chip-qty{background:var(--accent);color:#000;font-weight:900;font-size:10px;
+      width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center}
+
+    /* Actions */
+    .card-actions{display:flex;gap:8px;margin-top:10px}
+    .action-btn{flex:1;padding:13px 12px;border:none;border-radius:9px;font-family:inherit;
+      font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;
+      display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:inherit}
+    .action-btn:active{transform:scale(.95)}
+    .btn-take{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(59,130,246,.28)}
+    .btn-delivered{background:var(--accent);color:#fff;box-shadow:0 4px 14px var(--accent-glow)}
+    .btn-call{background:var(--card2);color:var(--text);border:1px solid var(--border);flex:0 0 48px;padding:0}
+
+    /* ── MAP SECTION ── */
+    .map-card{margin:0 14px 10px;border-radius:var(--r);overflow:hidden;border:1px solid rgba(16,185,129,.25);transition:all 0.3s ease;position:relative}
+    .map-card.fullscreen{position:fixed;inset:0;margin:0;border-radius:0;z-index:400;border:none}
+    #courierMap{width:100%;height:220px;transition:height 0.3s ease}
+    .map-card.fullscreen #courierMap{height:calc(100vh - 48px)}
+    .map-toolbar{background:var(--card);border-top:1px solid var(--border);padding:10px 14px;
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .map-card.fullscreen .map-toolbar{position:absolute;bottom:0;left:0;right:0;z-index:401}
+    .map-label-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);
+      box-shadow:0 0 0 3px rgba(16,185,129,.2);animation:livePulse 2s infinite;flex-shrink:0}
+    .map-status-text{font-size:11.5px;font-weight:600;color:var(--text2);flex:1}
+    .map-center-btn{padding:6px 12px;font-size:12px;font-weight:600;background:var(--card2);
+      border:1px solid var(--border);border-radius:7px;color:var(--text2);cursor:pointer;font-family:inherit;transition:.15s}
+    .map-center-btn:active{transform:scale(.95)}
+    /* Map legend chips */
+    .map-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;width:100%}
+    .legend-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;
+      font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.1)}
+
+    /* Done row */
+    .done-row{margin:0 14px 8px;background:var(--card);border-radius:10px;border:1px solid var(--border);
+      padding:12px 14px;display:flex;align-items:center;gap:12px}
+    .done-icon-box{width:34px;height:34px;border-radius:9px;background:rgba(16,185,129,.12);
+      display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .done-info{flex:1;min-width:0}
+    .done-id{font-size:14px;font-weight:700}
+    .done-addr{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .done-price{font-size:14px;font-weight:700;color:var(--accent);white-space:nowrap}
+
+    /* Empty */
+    .empty-card{margin:8px 14px;background:var(--card);border:1px dashed var(--border);
+      border-radius:var(--r);padding:40px 20px;text-align:center}
+    .empty-emoji{font-size:44px;margin-bottom:10px}
+    .empty-title{font-size:15px;font-weight:700;margin-bottom:5px}
+    .empty-sub{font-size:12px;color:var(--text3);line-height:1.6}
+
+    /* Load more */
+    .load-more-btn{display:flex;align-items:center;justify-content:center;gap:7px;
+      margin:0 14px 14px;padding:12px;background:var(--card);border:1px solid var(--border);
+      border-radius:var(--r-sm);font-family:inherit;font-size:13px;font-weight:600;
+      color:var(--text2);cursor:pointer;transition:.15s}
+    .load-more-btn:active{transform:scale(.97);background:var(--card2)}
+
+    /* Stats page */
+    .stats-section{margin:0 14px 10px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .stats-section-title{padding:13px 16px 10px;font-size:12px;font-weight:700;color:var(--text2);
+      text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+    .stats-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+    .stats-row:last-child{border-bottom:none}
+    .stats-row-label{font-size:13.5px;font-weight:500}
+    .stats-row-val{font-size:17px;font-weight:900}
+
+    /* Bottom Tab Bar */
+    .tab-bar{position:fixed;bottom:0;left:0;right:0;height:var(--tab-h);
+      background:rgba(19,26,20,.97);border-top:1px solid var(--border);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      display:flex;align-items:flex-start;padding-top:8px;z-index:300}
+    .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+      cursor:pointer;padding:0 4px;position:relative;transition:.15s}
+    .tab-icon-wrap{width:44px;height:30px;border-radius:15px;display:flex;align-items:center;
+      justify-content:center;font-size:20px;position:relative;transition:.2s}
+    .tab-item.active .tab-icon-wrap{background:rgba(16,185,129,.14)}
+    .tab-item.active .tab-icon-wrap.tw-orange{background:rgba(249,115,22,.13)}
+    .tab-item.active .tab-icon-wrap.tw-blue{background:rgba(59,130,246,.13)}
+    .tab-item.active .tab-icon-wrap.tw-purple{background:rgba(139,92,246,.12)}
+    .tab-label{font-size:10.5px;font-weight:600;color:var(--text3);transition:.15s}
+    .tab-item.active .tab-label{color:var(--accent);font-weight:700}
+    .tab-item.active .tab-label.tl-orange{color:var(--orange)}
+    .tab-item.active .tab-label.tl-blue{color:var(--blue)}
+    .tab-item.active .tab-label.tl-purple{color:var(--purple)}
+    .tab-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;
+      background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;
+      padding:0 4px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+    .tab-badge.hidden{display:none}
+
+    /* Loader */
+    .loader-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+    .loader-emoji{font-size:52px;animation:bounce .7s ease-in-out infinite alternate}
+    @keyframes bounce{to{transform:scale(1.08) rotate(5deg)}}
+    .loader-spin{width:32px;height:32px;border:3px solid rgba(16,185,129,.18);
+      border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loader-txt{font-size:12.5px;color:var(--text3);font-weight:500}
+
+    /* Toast */
+    #courierToast{position:fixed;top:66px;left:50%;transform:translateX(-50%) translateY(-16px);
+      background:var(--card);border:1px solid var(--border);border-radius:100px;
+      padding:9px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;
+      box-shadow:0 8px 32px rgba(0,0,0,.5);opacity:0;
+      transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:2000;pointer-events:none;white-space:nowrap}
+    #courierToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+
+<div class="loader-overlay" id="loader">
+  <div class="loader-emoji">🛵</div>
+  <div class="loader-spin"></div>
+  <div class="loader-txt">Yuklanmoqda...</div>
+</div>
+
+<header class="app-header">
+  <div class="header-left">
+    <div class="app-icon">🛵</div>
+    <div>
+      <div class="app-name">Kuryer Panel</div>
+      <div class="app-user" id="courierName">{{ courier_name }}</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot" id="liveDot" title="Jonli ulanish"></div>
+    <div class="icon-btn" onclick="refresh()" id="refreshBtn">🔄</div>
+  </div>
+</header>
+
+<div class="stats-banner">
+  <div class="stat-item"><div class="stat-num orange" id="st-avail">0</div><div class="stat-lbl">Kutmoqda</div></div>
+  <div class="stat-item"><div class="stat-num green" id="st-active">0</div><div class="stat-lbl">Yo'lda</div></div>
+  <div class="stat-item"><div class="stat-num blue" id="st-done">0</div><div class="stat-lbl">Yetkazildi</div></div>
+  <div class="stat-item"><div class="stat-num purple" id="st-earn">0</div><div class="stat-lbl">Daromad</div></div>
+</div>
+
+<!-- Kutmoqda -->
+<div class="page active" id="page-avail">
+  <div class="sec-header">
+    <div class="sec-title">📦 Kutayotgan buyurtmalar <span class="sec-badge badge-orange" id="bdg-avail">0</span></div>
+  </div>
+  <div id="list-avail"></div>
+  <button class="load-more-btn" id="more-avail" onclick="showMore('avail')" style="display:none">
+    ⬇ Yana ko'rish (<span id="more-avail-count">0</span> ta)
+  </button>
+</div>
+
+<!-- Yo'lda -->
+<div class="page" id="page-active">
+  <div class="sec-header">
+    <div class="sec-title">🛵 Men yetkazayotganlar <span class="sec-badge badge-green" id="bdg-active">0</span></div>
+  </div>
+  <!-- Multi-order map -->
+  <div class="map-card" id="mapCard" style="display:none">
+    <div id="courierMap"></div>
+    <button onclick="toggleMapFullscreen()" style="position:absolute;top:10px;right:10px;z-index:400;background:var(--card);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px">⛶</button>
+    <div class="map-toolbar">
+      <div class="map-label-dot"></div>
+      <div class="map-status-text" id="mapStatusText">Jonli joylashuv</div>
+      <button class="map-center-btn" onclick="centerMyLocation()">📍 Menda</button>
+    </div>
+    <div class="map-toolbar" style="padding-top:0;border-top:none">
+      <div class="map-legend" id="mapLegend"></div>
+    </div>
+  </div>
+  <div id="list-active"></div>
+  <button class="load-more-btn" id="more-active" onclick="showMore('active')" style="display:none">
+    ⬇ Yana ko'rish (<span id="more-active-count">0</span> ta)
+  </button>
+</div>
+
+<!-- Yetkazildi -->
+<div class="page" id="page-done">
+  <div class="sec-header">
+    <div class="sec-title">✅ Bugun yetkazilganlar <span class="sec-badge badge-blue" id="bdg-done">0</span></div>
+  </div>
+  <div id="list-done"></div>
+  <button class="load-more-btn" id="more-done" onclick="showMore('done')" style="display:none">
+    ⬇ Yana ko'rish (<span id="more-done-count">0</span> ta)
+  </button>
+</div>
+
+<!-- Natija -->
+<div class="page" id="page-stats">
+  <div class="sec-header"><div class="sec-title">📊 Bugungi natijalarim</div></div>
+  <div id="stats-detail"></div>
+</div>
+
+<div id="courierToast"></div>
+
+<nav class="tab-bar">
+  <div class="tab-item active" id="tab-avail" onclick="switchPage('avail')">
+    <div class="tab-icon-wrap tw-orange">📦<span class="tab-badge hidden" id="tbdg-avail">0</span></div>
+    <div class="tab-label tl-orange">Kutmoqda</div>
+  </div>
+  <div class="tab-item" id="tab-active" onclick="switchPage('active')">
+    <div class="tab-icon-wrap">🛵<span class="tab-badge hidden" id="tbdg-active">0</span></div>
+    <div class="tab-label">Yo'lda</div>
+  </div>
+  <div class="tab-item" id="tab-done" onclick="switchPage('done')">
+    <div class="tab-icon-wrap tw-blue">✅</div>
+    <div class="tab-label tl-blue">Yetkazildi</div>
+  </div>
+  <div class="tab-item" id="tab-stats" onclick="switchPage('stats')">
+    <div class="tab-icon-wrap tw-purple">📊</div>
+    <div class="tab-label tl-purple">Natija</div>
+  </div>
+</nav>
+
+<script>
+  // ── Telegram ──────────────────────────────────────────────────────────
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.expand();
+    tg.setHeaderColor?.('#131a14');
+    tg.setBackgroundColor?.('#0c0e0c');
+    const u = tg.initDataUnsafe?.user;
+    if (u) {
+      const tgName = [u.first_name, u.last_name].filter(Boolean).join(' ');
+      if (tgName) document.getElementById('courierName').textContent = tgName;
+    }
+  }
+
+  const csrf   = "{{ csrf_token|default:'' }}";
+  const restName = "{{ restaurant_name }}";
+  const CURRENCY = "{{ currency|escapejs }}";
+  const TILE_URL = "{{ app.tile_url|escapejs }}";
+  const MAP_ATTR = "{{ app.attribution|escapejs }}";
+  const MAP_MAX_ZOOM = {{ app.max_zoom|default:19 }};
+
+  // ── Color palette for multi-order markers ─────────────────────────────
+  const ORDER_COLORS = [
+    '#ef4444','#3b82f6','#f59e0b','#8b5cf6',
+    '#06b6d4','#ec4899','#22c55e','#f97316',
+    '#a855f7','#14b8a6'
+  ];
+  function orderColor(idx) { return ORDER_COLORS[idx % ORDER_COLORS.length]; }
+
+  // ── State ─────────────────────────────────────────────────────────────
+  const PAGE_LIMIT = 6;
+  const DATA  = { avail: [], active: [], done: [] };
+  const SHOWN = { avail: PAGE_LIMIT, active: PAGE_LIMIT, done: PAGE_LIMIT };
+  let currentPage = 'avail';
+
+  // Map state
+  let map = null;
+  let courierMarker = null;
+  let orderMarkers  = {};       // { orderId: L.marker }
+  let trackingWs    = null;
+  let lastLat = null, lastLng = null;
+  let lastFitSig = null;            // kamera oxirgi marta qayeraga sig'gan
+
+  // ── Navigation ────────────────────────────────────────────────────────
+  function switchPage(name) {
+    if (currentPage === name) return;
+    currentPage = name;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    document.getElementById(`page-${name}`)?.classList.add('active');
+    document.getElementById(`tab-${name}`)?.classList.add('active');
+    if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+    if (name === 'active' && map) setTimeout(() => map.invalidateSize(), 120);
+  }
+
+  function showMore(tab) { SHOWN[tab] += PAGE_LIMIT; renderList(tab, DATA[tab]); }
+
+  // ── Toast ─────────────────────────────────────────────────────────────
+  function toast(msg, color = 'var(--accent)') {
+    const el = document.getElementById('courierToast');
+    el.innerHTML = `<span style="color:${color}">${msg}</span>`;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function fmtNum(n) { return new Intl.NumberFormat('uz-UZ').format(n || 0); }
+  function money(n) { return `${fmtNum(n)} ${CURRENCY}`; }
+
+  // ── Render: Available ─────────────────────────────────────────────────
+  function renderAvailCard(o) {
+    const chips = (o.items || []).map(it =>
+      `<div class="item-chip"><span class="chip-qty">${it.quantity}</span>${it.name}</div>`
+    ).join('');
+    return `
+    <div class="order-card available" id="card-${o.id}">
+      <div class="card-bar bar-orange"></div>
+      <div class="card-body">
+        <div class="card-top">
+          <div>
+            <div class="order-num">#${o.id}</div>
+            <div class="order-price">${money(o.total_price)}</div>
+          </div>
+          <div style="text-align:right;font-size:11px;color:var(--text3)">⏱ ${o.created_at}</div>
+        </div>
+        <div class="info-block">
+          <div class="info-icon-box ib-green">📍</div>
+          <div><div class="info-label">Manzil</div><div class="info-value">${o.address || 'Kiritilmagan'}</div></div>
+        </div>
+        <div class="info-block">
+          <div class="info-icon-box ib-blue">👤</div>
+          <div>
+            <div class="info-label">Mijoz</div>
+            <div class="info-value">${o.customer_name || '—'}</div>
+            ${o.customer_phone && o.customer_phone !== '—' ? `<div style="font-size:11px;color:var(--text3)">${o.customer_phone}</div>` : ''}
+          </div>
+        </div>
+        ${chips ? `<div class="items-wrap"><div class="items-wrap-title">📋 Mahsulotlar</div>${chips}</div>` : ''}
+        ${o.note ? `<div class="info-block"><div class="info-icon-box ib-yellow">📝</div><div><div class="info-label">Izoh</div><div class="info-value" style="color:var(--yellow)">${o.note}</div></div></div>` : ''}
+        <div class="card-actions">
+          <button class="action-btn btn-take" onclick="takeOrder(${o.id})">📦 Olib ketish</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── Render: Active (multi-order, color-coded) ─────────────────────────
+  function renderActiveCard(o, colorIdx) {
+    const color = orderColor(colorIdx);
+    const chips = (o.items || []).map(it =>
+      `<div class="item-chip"><span class="chip-qty" style="background:${color}">${it.quantity}</span>${it.name}</div>`
+    ).join('');
+    return `
+    <div class="order-card active-del" id="card-${o.id}" style="border-color:${color}33">
+      <div class="card-bar" style="background:linear-gradient(90deg,${color},${color}99)"></div>
+      <div class="card-body">
+        <div class="card-top">
+          <div>
+            <div class="order-num">
+              <div class="order-tag" style="background:${color}">${colorIdx + 1}</div>
+              #${o.id}
+            </div>
+            <div class="order-price">${money(o.total_price)}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;padding:4px 10px;border-radius:100px;font-weight:700;
+              background:${color}20;color:${color};border:1px solid ${color}40">🛵 Yo'lda</div>
+          </div>
+        </div>
+        <!-- Progress steps -->
+        <div class="step-track">
+          <div class="step"><div class="step-dot done">✓</div><div class="step-lbl">Qabul</div></div>
+          <div class="step-line done"></div>
+          <div class="step"><div class="step-dot done">✓</div><div class="step-lbl">Tayyor</div></div>
+          <div class="step-line done"></div>
+          <div class="step"><div class="step-dot current">🛵</div><div class="step-lbl">Yo'lda</div></div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot">🏠</div><div class="step-lbl">Yetkazildi</div></div>
+        </div>
+        <div class="info-block" style="border-color:${color}25">
+          <div class="info-icon-box" style="background:${color}20">📍</div>
+          <div>
+            <div class="info-label">Yetkazish manzili</div>
+            <div class="info-value">${o.address || 'Kiritilmagan'}</div>
+          </div>
+        </div>
+        <div class="info-block">
+          <div class="info-icon-box ib-blue">👤</div>
+          <div>
+            <div class="info-label">Mijoz</div>
+            <div class="info-value">${o.customer_name || '—'}</div>
+            ${o.customer_phone && o.customer_phone !== '—' ? `<div style="font-size:11px;color:var(--text3)">${o.customer_phone}</div>` : ''}
+          </div>
+        </div>
+        ${chips ? `<div class="items-wrap"><div class="items-wrap-title">📋 Tarkib</div>${chips}</div>` : ''}
+        ${o.note ? `<div class="info-block"><div class="info-icon-box ib-yellow">📝</div><div><div class="info-label">Izoh</div><div class="info-value" style="color:var(--yellow)">${o.note}</div></div></div>` : ''}
+        <div class="card-actions">
+          ${o.customer_phone && o.customer_phone !== '—'
+            ? `<a href="tel:${o.customer_phone}" class="action-btn btn-call" title="Qo'ng'iroq">📞</a>` : ''}
+          <button class="action-btn btn-delivered"
+            style="background:${color};box-shadow:0 4px 14px ${color}44"
+            onclick="deliverOrder(${o.id})">🎉 Yetkazib berildi!</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── Render: Done ──────────────────────────────────────────────────────
+  function renderDoneRow(o) {
+    return `
+    <div class="done-row">
+      <div class="done-icon-box">✅</div>
+      <div class="done-info">
+        <div class="done-id">#${o.id}</div>
+        <div class="done-addr">${o.address || o.customer_name || '—'}</div>
+      </div>
+      <div class="done-price">${money(o.total_price)}</div>
+    </div>`;
+  }
+
+  // ── Render list + pagination ───────────────────────────────────────────
+  function renderList(tab, items) {
+    const boxes = { avail: 'list-avail', active: 'list-active', done: 'list-done' };
+    const box = document.getElementById(boxes[tab]);
+    const shown = SHOWN[tab];
+    const visible = items.slice(0, shown);
+    const remaining = items.length - shown;
+
+    if (!items.length) {
+      const msgs = {
+        avail:  ['😌', 'Kutayotgan buyurtma yo\'q', 'Oshpaz tayyor degan buyurtmalar bu yerda ko\'rinadi.'],
+        active: ['🛵', 'Hozir yo\'lda emasman', '"Kutmoqda" tabdan buyurtma olib keting.'],
+        done:   ['🎉', 'Hali yetkazmadim', 'Yetkazilgan buyurtmalar bu yerda ko\'rinadi.'],
+      };
+      const [emoji, title, sub] = msgs[tab];
+      box.innerHTML = `<div class="empty-card"><div class="empty-emoji">${emoji}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+    } else if (tab === 'done') {
+      box.innerHTML = visible.map(renderDoneRow).join('');
+    } else if (tab === 'active') {
+      box.innerHTML = visible.map((o, i) => renderActiveCard(o, i)).join('');
+    } else {
+      box.innerHTML = visible.map(renderAvailCard).join('');
+    }
+
+    const btn = document.getElementById(`more-${tab}`);
+    document.getElementById(`more-${tab}-count`).textContent = remaining;
+    btn.style.display = remaining > 0 ? 'flex' : 'none';
+  }
+
+  // ── Map Fullscreen ────────────────────────────────────────────────────
+  function toggleMapFullscreen() {
+    const card = document.getElementById('mapCard');
+    card.classList.toggle('fullscreen');
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    setTimeout(() => { if (map) map.invalidateSize(); }, 350);
+  }
+
+  // ── MAP — Multi-order markers ──────────────────────────────────────────
+  function initOrUpdateMap(activeOrders) {
+    const mapCard = document.getElementById('mapCard');
+    if (!activeOrders.length) {
+      mapCard.style.display = 'none';
+      if (trackingWs) { trackingWs.close(); trackingWs = null; }
+      lastFitSig = null;
+      return;
+    }
+    mapCard.style.display = 'block';
+
+    if (!map) {
+      map = L.map('courierMap', { zoomControl: false, attributionControl: false })
+               .setView([41.2995, 69.2401], 13);
+      L.tileLayer(TILE_URL, {
+        maxZoom: MAP_MAX_ZOOM,
+        attribution: MAP_ATTR,
+        opacity: 0.85,
+      }).addTo(map);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+    } else {
+      map.invalidateSize();
+    }
+
+    // Remove old order markers
+    Object.values(orderMarkers).forEach(m => map.removeLayer(m));
+    orderMarkers = {};
+
+    const bounds = [];
+
+    // Add a marker per active order
+    activeOrders.forEach((o, idx) => {
+      const color = orderColor(idx);
+      const num = idx + 1;
+
+      // Customer location marker
+      if (o.latitude && o.longitude) {
+        const markerIcon = L.divIcon({
+          html: `<div style="
+            width:32px;height:32px;border-radius:50% 50% 50% 0;
+            background:${color};transform:rotate(-45deg);
+            border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);
+            display:flex;align-items:center;justify-content:center">
+            <div style="transform:rotate(45deg);font-size:13px;font-weight:900;color:#fff">${num}</div>
+          </div>`,
+          className: '',
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -34],
+        });
+        const m = L.marker([o.latitude, o.longitude], { icon: markerIcon })
+          .addTo(map)
+          .bindPopup(`<b style="color:${color}">📦 #${o.id}</b><br>${o.address || 'Manzil yo\'q'}<br><small>${o.customer_name || ''}</small>`);
+        orderMarkers[o.id] = m;
+        bounds.push([o.latitude, o.longitude]);
+      }
+
+      // Connect via WS for first order (main tracking)
+      if (idx === 0) setupWS(o.id);
+    });
+
+    // Fit all markers in view.
+    // Har bir order_update'da fitBounds qilinsa Leaflet yangi plitkalarni
+    // qayta yuklaydi (provayderga keraksiz so'rov). Faqat markerlar
+    // haqiqatan o'zgarganda kamerani qayta joylaymiz.
+    const fitSig = bounds.map(b => b.join(',')).join('|');
+    if (bounds.length > 0 && fitSig !== lastFitSig) {
+      lastFitSig = fitSig;
+      if (lastLat && lastLng) bounds.push([lastLat, lastLng]);
+      if (bounds.length > 1) {
+        map.fitBounds(bounds, { padding: [40, 40] });
+      } else {
+        map.setView(bounds[0], 14);
+      }
+    }
+
+    // Map legend
+    const legend = document.getElementById('mapLegend');
+    legend.innerHTML = activeOrders.map((o, i) => `
+      <div class="legend-chip" style="background:${orderColor(i)}22;color:${orderColor(i)};border-color:${orderColor(i)}44">
+        <b>${i+1}</b> #${o.id}
+      </div>`).join('');
+
+    document.getElementById('mapStatusText').textContent =
+      `${activeOrders.length} ta buyurtma — jonli joylashuv`;
+  }
+
+  function centerMyLocation() {
+    if (map && lastLat && lastLng) map.setView([lastLat, lastLng], 15);
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  }
+
+  // ── WebSocket ─────────────────────────────────────────────────────────
+  function setupWS(orderId) {
+    if (trackingWs?.readyState === WebSocket.OPEN) return;
+    if (trackingWs) trackingWs.close();
+    const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    trackingWs = new WebSocket(`${scheme}://${window.location.host}/ws/orders/${orderId}/track/`);
+    trackingWs.onopen = () => { if (lastLat && lastLng) sendLoc(lastLat, lastLng); };
+  }
+  function sendLoc(lat, lng) {
+    if (trackingWs?.readyState === WebSocket.OPEN)
+      trackingWs.send(JSON.stringify({ action: 'update_location', lat, lng }));
+  }
+
+  // ── Staff real-time oqim ───────────────────────────────────────────────
+  // /ws/staff/orders/ — yangi buyurtma yoki holat o'zgarganda darhol
+  // yangilanadi. Ulanish uzilsa zaxira poll (15 s) va qayta ulanish ishlaydi.
+  const POLL_MS = 15000;
+  let staffWs = null, staffRetry = 0, staffTimer = null, pollTimer = null;
+
+  function setLive(on) {
+    const dot = document.getElementById('liveDot');
+    if (dot) {
+      dot.style.opacity = on ? '1' : '0.35';
+      dot.title = on ? 'Jonli ulanish faol' : 'Jonli ulanish uzildi';
+    }
+  }
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(() => { if (!staffWs || staffWs.readyState > 1) loadOrders(true); }, POLL_MS);
+  }
+  function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+  function connectStaffWS() {
+    const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    try { staffWs = new WebSocket(`${scheme}://${window.location.host}/ws/staff/orders/`); }
+    catch (e) { scheduleStaffRetry(); return; }
+
+    staffWs.onopen = () => { staffRetry = 0; setLive(true); stopPolling(); };
+    staffWs.onmessage = ev => {
+      let msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.action === 'order_update' || msg.action === 'order_new') {
+        if (msg.action === 'order_new' && tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        loadOrders(true);
+      }
+    };
+    staffWs.onclose = () => { setLive(false); startPolling(); scheduleStaffRetry(); };
+    staffWs.onerror = () => { try { staffWs.close(); } catch (e) {} };
+  }
+  function scheduleStaffRetry() {
+    clearTimeout(staffTimer);
+    staffRetry = Math.min(staffRetry + 1, 6);
+    staffTimer = setTimeout(connectStaffWS, 1000 * Math.pow(1.6, staffRetry));
+  }
+
+  // ── Geolocation ───────────────────────────────────────────────────────
+  function startTracking() {
+    if (!('geolocation' in navigator)) return;
+    navigator.geolocation.watchPosition(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      lastLat = lat; lastLng = lng;
+      if (map) {
+        if (!courierMarker) {
+          courierMarker = L.marker([lat, lng], {
+            icon: L.divIcon({
+              html: '<div style="font-size:28px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))">🛵</div>',
+              className: '', iconSize: [28, 28], iconAnchor: [14, 20]
+            })
+          }).addTo(map).bindPopup('Siz shu yerdasiz');
+        } else {
+          courierMarker.setLatLng([lat, lng]);
+        }
+      }
+      // Update location for all active orders
+      DATA.active.forEach(o => {
+        fetch(`/api/staff/courier/orders/${o.id}/location/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+          body: JSON.stringify({ latitude: lat, longitude: lng })
+        }).catch(() => {});
+      });
+      sendLoc(lat, lng);
+    }, null, { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 });
+  }
+
+  // ── Stats page ────────────────────────────────────────────────────────
+  function renderStats(stats, todayList) {
+    const totalEarned = todayList.reduce((s, o) => s + (o.total_price || 0), 0);
+    const cnt   = stats.today_done_count || 0;
+    const avail = stats.available_count  || 0;
+    const activ = stats.active_count     || 0;
+    document.getElementById('stats-detail').innerHTML = `
+      <div class="stats-section">
+        <div class="stats-section-title">Bugungi raqamlar</div>
+        ${[['📦 Kutayotgan', avail, 'var(--orange)'],
+           ['🛵 Yetkazayotganim', activ, 'var(--accent)'],
+           ['✅ Yetkazib berdim', cnt, 'var(--blue)']
+          ].map(([l, v, c]) => `<div class="stats-row">
+            <div class="stats-row-label">${l}</div>
+            <div class="stats-row-val" style="color:${c}">${v}</div>
+          </div>`).join('')}
+      </div>
+      <div class="stats-section">
+        <div class="stats-section-title">Daromad</div>
+        <div class="stats-row">
+          <div class="stats-row-label">💰 Bugungi umumiy</div>
+          <div class="stats-row-val" style="color:var(--accent)">${money(totalEarned)}</div>
+        </div>
+      </div>
+      ${activ > 0 ? `
+      <div class="stats-section">
+        <div class="stats-section-title">Hozirgi zakaslar xaritasi</div>
+        <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">
+          ${DATA.active.map((o, i) => `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+              background:var(--card2);border-radius:9px;border:1px solid ${orderColor(i)}33;flex:1;min-width:140px">
+              <div style="width:28px;height:28px;border-radius:8px;background:${orderColor(i)};
+                color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
+              <div>
+                <div style="font-size:13px;font-weight:700">#${o.id}</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:1px">${money(o.total_price)}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+      <div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">🕒 Avtomatik yangilanadi (15s)</div>
+    `;
+  }
+
+  // ── Load data ─────────────────────────────────────────────────────────
+  async function loadOrders(silent = false) {
+    if (!silent) document.getElementById('refreshBtn').style.animation = 'spin 0.5s linear infinite';
+    try {
+      const res = await fetch('/api/staff/courier/orders/');
+      if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+
+      const avail  = data.stats?.available_count  || 0;
+      const active = data.stats?.active_count     || 0;
+      const done   = data.stats?.today_done_count || 0;
+      const todayList = data.today_done || [];
+      const totalEarn = todayList.reduce((s, o) => s + (o.total_price || 0), 0);
+      const earnDisplay = totalEarn >= 1000000
+        ? (totalEarn/1000000).toFixed(1)+'M'
+        : totalEarn >= 1000
+          ? Math.round(totalEarn/1000)+'K'
+          : String(totalEarn);
+
+      document.getElementById('st-avail').textContent  = avail;
+      document.getElementById('st-active').textContent = active;
+      document.getElementById('st-done').textContent   = done;
+      document.getElementById('st-earn').textContent   = earnDisplay;
+
+      document.getElementById('bdg-avail').textContent  = avail;
+      document.getElementById('bdg-active').textContent = active;
+      document.getElementById('bdg-done').textContent   = done;
+
+      const tA = document.getElementById('tbdg-avail');
+      const tB = document.getElementById('tbdg-active');
+      tA.textContent = avail;  tA.classList.toggle('hidden', avail === 0);
+      tB.textContent = active; tB.classList.toggle('hidden', active === 0);
+
+      DATA.avail  = data.available  || [];
+      DATA.active = data.my_active  || [];
+      DATA.done   = todayList;
+
+      renderList('avail',  DATA.avail);
+      renderList('active', DATA.active);
+      renderList('done',   DATA.done);
+      renderStats(data.stats || {}, todayList);
+
+      // Multi-order map
+      if (currentPage === 'active' || DATA.active.length > 0) {
+        initOrUpdateMap(DATA.active);
+      }
+
+      document.getElementById('loader').style.display = 'none';
+    } catch (e) {
+      console.error(e);
+      toast('❌ Yuklanmadi: ' + e.message, 'var(--red)');
+    } finally {
+      document.getElementById('refreshBtn').style.animation = '';
+    }
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────
+  async function takeOrder(id) {
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    const card = document.getElementById(`card-${id}`);
+    if (card) { card.style.opacity = '0.4'; card.style.transform = 'scale(.97)'; card.style.transition = '.2s'; }
+    try {
+      const res = await fetch(`/api/staff/courier/orders/${id}/status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ status: 'yolda' })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Xatolik');
+      toast('🛵 Buyurtma qabul qilindi!', 'var(--accent)');
+      switchPage('active');
+      await loadOrders(true);
+    } catch (e) {
+      if (card) { card.style.opacity = '1'; card.style.transform = ''; }
+      toast('❌ ' + e.message, 'var(--red)');
+    }
+  }
+
+  async function deliverOrder(id) {
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+    const card = document.getElementById(`card-${id}`);
+    if (card) { card.style.opacity = '0.4'; card.style.transition = '.2s'; }
+    try {
+      const res = await fetch(`/api/staff/courier/orders/${id}/status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ status: 'yetkazildi' })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Xatolik');
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      toast('🎉 Yetkazib berildi!', 'var(--accent)');
+      // Remove marker from map
+      if (orderMarkers[id]) { map?.removeLayer(orderMarkers[id]); delete orderMarkers[id]; }
+      switchPage('done');
+      await loadOrders(true);
+    } catch (e) {
+      if (card) { card.style.opacity = '1'; }
+      toast('❌ ' + e.message, 'var(--red)');
+    }
+  }
+
+  function refresh() {
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    loadOrders();
+  }
+
+  // Real-time oqim + zaxira poll
+  setLive(false);
+  startPolling();
+  connectStaffWS();
+  loadOrders();
+  startTracking();
+</script>
+</body>
+</html>

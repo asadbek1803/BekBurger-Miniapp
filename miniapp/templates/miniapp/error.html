@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app.restaurant_name|default:"BekBurger" }} — Xatolik</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 32px;
+        }
+        .error-box { max-width: 320px; }
+        .error-icon { font-size: 72px; margin-bottom: 16px; }
+        h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        p { color: var(--tg-theme-hint-color, #888); font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <div class="error-icon">🚫</div>
+        <h1>Ruxsat yo'q</h1>
+        <p>{{ message }}</p>
+    </div>
+    <script>
+        if (window.Telegram?.WebApp) {
+            Telegram.WebApp.ready();
+        }
+    </script>
+</body>
+</html>

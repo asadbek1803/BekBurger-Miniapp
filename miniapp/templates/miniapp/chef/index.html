@@ -1,0 +1,856 @@
+﻿<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{{ restaurant_name }} — Oshpaz</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #f59e0b;
+      --accent-light: #fbbf24;
+      --accent-glow: rgba(245,158,11,0.22);
+      --bg: #0c0c0e;
+      --card: #1a1a1e;
+      --card2: #222228;
+      --border: rgba(255,255,255,0.07);
+      --text: #f4f4f5;
+      --text2: #a1a1aa;
+      --text3: #52525b;
+      --green: #10b981;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --r: 14px;
+      --r-sm: 10px;
+      --tab-h: 72px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: calc(var(--tab-h) + 16px);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--card);
+      padding: 0 16px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0; z-index: 200;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .app-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 3px 12px var(--accent-glow);
+      flex-shrink: 0;
+    }
+    .app-name { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+    .app-user { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .icon-btn {
+      width: 36px; height: 36px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; cursor: pointer;
+      transition: 0.15s;
+    }
+    .icon-btn:active { transform: scale(0.9); }
+
+    /* ── Live dot ── */
+    .live-dot {
+      width: 8px; height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+      animation: livePulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes livePulse {
+      0%,100% { box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+      50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.08); }
+    }
+
+    /* ── Stats Banner ── */
+    .stats-banner {
+      margin: 12px 14px 0;
+      background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(251,191,36,0.05));
+      border: 1px solid rgba(245,158,11,0.18);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+    .stat-item { text-align: center; position: relative; }
+    .stat-item:not(:last-child)::after {
+      content: ''; position: absolute;
+      right: 0; top: 50%; transform: translateY(-50%);
+      width: 1px; height: 65%;
+      background: rgba(255,255,255,0.07);
+    }
+    .stat-num {
+      font-size: 22px; font-weight: 900; line-height: 1;
+      margin-bottom: 3px; letter-spacing: -0.8px;
+    }
+    .stat-num.blue { color: var(--blue); }
+    .stat-num.accent { color: var(--accent); }
+    .stat-num.green { color: var(--green); }
+    .stat-num.purple { color: var(--purple); }
+    .stat-lbl { font-size: 9.5px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; }
+
+    /* ── Page container ── */
+    .page { display: none; }
+    .page.active { display: block; animation: pageIn 0.2s ease-out; }
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Section header ── */
+    .sec-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 14px 10px;
+    }
+    .sec-title {
+      font-size: 13.5px; font-weight: 700;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .sec-badge {
+      font-size: 10.5px; font-weight: 800;
+      padding: 2px 8px; border-radius: 100px;
+      background: var(--blue); color: #fff;
+    }
+    .sec-badge.accent { background: var(--accent); color: #000; }
+    .sec-badge.green { background: var(--green); color: #fff; }
+    .sec-badge.gray { background: var(--card2); color: var(--text2); border: 1px solid var(--border); }
+
+    /* ── Order card ── */
+    .order-card {
+      margin: 0 14px 10px;
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      animation: cardIn 0.25s ease-out;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .order-card.new-order  { border-color: rgba(59,130,246,0.3); }
+    .order-card.cooking    { border-color: rgba(245,158,11,0.3); }
+    .order-card.done-card  { border-color: rgba(16,185,129,0.2); opacity: 0.8; }
+
+    .card-bar { height: 3px; width: 100%; }
+    .bar-blue   { background: linear-gradient(90deg, var(--blue), #60a5fa); }
+    .bar-yellow { background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+    .bar-green  { background: linear-gradient(90deg, var(--green), #34d399); }
+
+    .card-body { padding: 14px; }
+    .card-top {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; margin-bottom: 12px;
+    }
+    .order-num { font-size: 17px; font-weight: 900; letter-spacing: -0.5px; }
+    .customer-name { font-size: 11.5px; color: var(--text3); margin-top: 2px; }
+
+    .time-badge {
+      display: flex; align-items: center; gap: 4px;
+      padding: 5px 10px; border-radius: 100px;
+      font-size: 11.5px; font-weight: 700;
+      background: var(--card2); border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .time-badge.ok     { color: var(--green); border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.08); }
+    .time-badge.warn   { color: var(--accent); border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.08); }
+    .time-badge.urgent { color: var(--red); border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.1); animation: urgBlink 1s ease-in-out infinite; }
+    @keyframes urgBlink { 0%,100%{opacity:1} 50%{opacity:0.65} }
+
+    /* ── Items ── */
+    .items-list { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+    .order-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 11px;
+      background: var(--card2);
+      border-radius: 9px;
+      border: 1px solid var(--border);
+    }
+    .qty-badge {
+      width: 26px; height: 26px;
+      background: var(--accent); color: #000;
+      font-size: 12px; font-weight: 900;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .qty-badge.done-qty { background: var(--green); color: #fff; }
+    .item-name { font-size: 13.5px; font-weight: 600; flex: 1; }
+    .prep-time { font-size: 10.5px; color: var(--text3); white-space: nowrap; }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      background: var(--card2); border-radius: 100px;
+      height: 4px; margin-bottom: 12px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      transition: width 1s linear;
+    }
+
+    /* ── Note ── */
+    .order-note {
+      display: flex; gap: 7px; align-items: flex-start;
+      padding: 9px 11px;
+      background: rgba(245,158,11,0.07);
+      border: 1px solid rgba(245,158,11,0.15);
+      border-radius: 9px;
+      margin-bottom: 11px;
+      font-size: 12.5px; color: var(--accent-light); font-weight: 500;
+    }
+
+    /* ── Actions ── */
+    .card-actions { display: flex; gap: 8px; }
+    .action-btn {
+      flex: 1; padding: 12px 14px;
+      border: none; border-radius: 9px;
+      font-family: inherit; font-size: 13.5px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .action-btn:active { transform: scale(0.95); }
+    .btn-accept { background: var(--blue); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+    .btn-done   { background: var(--green); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .btn-ghost  { background: var(--card2); color: var(--text2); border: 1px solid var(--border); flex: 0 0 auto; padding: 12px; }
+
+    /* ── Done card (compact) ── */
+    .done-card-row {
+      margin: 0 14px 8px;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .done-icon {
+      width: 34px; height: 34px;
+      background: rgba(16,185,129,0.12);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .done-info { flex: 1; }
+    .done-num { font-size: 14px; font-weight: 700; }
+    .done-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .done-time { font-size: 11.5px; color: var(--green); font-weight: 600; }
+
+    /* ── Empty ── */
+    .empty-card {
+      margin: 8px 14px;
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: var(--r);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .empty-emoji { font-size: 44px; margin-bottom: 10px; }
+    .empty-title { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+    .empty-sub { font-size: 12px; color: var(--text3); line-height: 1.6; }
+
+    /* ── Load more ── */
+    .load-more-btn {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      margin: 4px 14px 14px;
+      padding: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      color: var(--text2); cursor: pointer; transition: 0.15s;
+    }
+    .load-more-btn:hover { background: var(--card2); color: var(--text); }
+    .load-more-btn:active { transform: scale(0.97); }
+
+    /* ── Bottom Tab Bar ── */
+    .tab-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--tab-h);
+      background: rgba(26,26,30,0.97);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      align-items: flex-start;
+      padding-top: 8px;
+      z-index: 300;
+    }
+    .tab-item {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      cursor: pointer;
+      padding: 0 4px;
+      position: relative;
+      transition: 0.15s;
+    }
+    .tab-icon-wrap {
+      width: 44px; height: 30px;
+      border-radius: 15px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .tab-item.active .tab-icon-wrap {
+      background: rgba(245,158,11,0.15);
+    }
+    .tab-item.active .tab-icon-wrap.blue-tab { background: rgba(59,130,246,0.15); }
+    .tab-item.active .tab-icon-wrap.green-tab { background: rgba(16,185,129,0.12); }
+    .tab-item.active .tab-icon-wrap.purple-tab { background: rgba(139,92,246,0.12); }
+    .tab-label {
+      font-size: 10.5px; font-weight: 600;
+      color: var(--text3);
+      transition: 0.15s;
+    }
+    .tab-item.active .tab-label { color: var(--accent); font-weight: 700; }
+    .tab-item.active .tab-label.blue-lbl { color: var(--blue); }
+    .tab-item.active .tab-label.green-lbl { color: var(--green); }
+    .tab-item.active .tab-label.purple-lbl { color: var(--purple); }
+
+    .tab-badge {
+      position: absolute;
+      top: -2px; right: -2px;
+      min-width: 18px; height: 18px;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px; font-weight: 800;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 4px;
+      border: 2px solid var(--bg);
+    }
+    .tab-badge.hidden { display: none; }
+
+    /* ── Loader ── */
+    .loader-overlay {
+      position: fixed; inset: 0;
+      background: var(--bg); z-index: 999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+    }
+    .loader-emoji { font-size: 50px; animation: bounce 0.75s ease-in-out infinite alternate; }
+    @keyframes bounce { to { transform: scale(1.1); } }
+    .loader-spin {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(245,158,11,0.18);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-txt { font-size: 12.5px; color: var(--text3); font-weight: 500; }
+
+    /* ── Toast ── */
+    #chefToast {
+      position: fixed; top: 66px; left: 50%;
+      transform: translateX(-50%) translateY(-16px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 9px 18px;
+      font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 7px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 2000; pointer-events: none; white-space: nowrap;
+    }
+    #chefToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Spinning refresh icon ── */
+    .spinning { animation: spin 0.5s linear infinite; }
+  </style>
+</head>
+<body>
+
+<!-- Loader -->
+<div class="loader-overlay" id="loader">
+  <div class="loader-emoji">👨‍🍳</div>
+  <div class="loader-spin"></div>
+  <div class="loader-txt">Yuklanmoqda...</div>
+</div>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="header-left">
+    <div class="app-icon">👨‍🍳</div>
+    <div>
+      <div class="app-name">Oshpaz Panel</div>
+      <div class="app-user" id="chefName">{{ chef_name }}</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot" id="liveDot" title="Jonli ulanish"></div>
+    <div class="icon-btn" onclick="refresh()" id="refreshBtn">🔄</div>
+  </div>
+</header>
+
+<!-- Stats -->
+<div class="stats-banner">
+  <div class="stat-item">
+    <div class="stat-num blue" id="st-new">0</div>
+    <div class="stat-lbl">Yangi</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num accent" id="st-cook">0</div>
+    <div class="stat-lbl">Tayyorlanmoqda</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num green" id="st-done">0</div>
+    <div class="stat-lbl">Bugun tayyor</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num purple" id="st-total">0</div>
+    <div class="stat-lbl">Jami bugun</div>
+  </div>
+</div>
+
+<!-- Pages -->
+<!-- Page 1: Yangi buyurtmalar -->
+<div class="page active" id="page-new">
+  <div class="sec-header">
+    <div class="sec-title">🆕 Yangi buyurtmalar <span class="sec-badge" id="bdg-new">0</span></div>
+  </div>
+  <div id="list-new"></div>
+  <button class="load-more-btn" id="more-new" onclick="showMore('new')" style="display:none">
+    ⬇ Yana ko'rish (<span id="more-new-count">0</span> ta)
+  </button>
+</div>
+
+<!-- Page 2: Tayyorlanmoqda -->
+<div class="page" id="page-cook">
+  <div class="sec-header">
+    <div class="sec-title">🔥 Tayyorlanmoqda <span class="sec-badge accent" id="bdg-cook">0</span></div>
+  </div>
+  <div id="list-cook"></div>
+  <button class="load-more-btn" id="more-cook" onclick="showMore('cook')" style="display:none">
+    ⬇ Yana ko'rish (<span id="more-cook-count">0</span> ta)
+  </button>
+</div>
+
+<!-- Page 3: Tayyor -->
+<div class="page" id="page-done">
+  <div class="sec-header">
+    <div class="sec-title">✅ Tayyor qilinganlar <span class="sec-badge green" id="bdg-done">0</span></div>
+  </div>
+  <div id="list-done"></div>
+  <button class="load-more-btn" id="more-done" onclick="showMore('done')" style="display:none">
+    ⬇ Yana ko'rish (<span id="more-done-count">0</span> ta)
+  </button>
+</div>
+
+<!-- Page 4: Statistika -->
+<div class="page" id="page-stats">
+  <div class="sec-header">
+    <div class="sec-title">📊 Bugungi natijalari</div>
+  </div>
+  <div id="stats-detail"></div>
+</div>
+
+<!-- Toast -->
+<div id="chefToast"></div>
+
+<!-- Bottom Tab Bar -->
+<nav class="tab-bar">
+  <div class="tab-item active" id="tab-new" onclick="switchPage('new')">
+    <div class="tab-icon-wrap blue-tab">
+      🆕
+      <span class="tab-badge hidden" id="tbdg-new">0</span>
+    </div>
+    <div class="tab-label blue-lbl">Yangi</div>
+  </div>
+  <div class="tab-item" id="tab-cook" onclick="switchPage('cook')">
+    <div class="tab-icon-wrap">
+      🔥
+      <span class="tab-badge hidden" id="tbdg-cook">0</span>
+    </div>
+    <div class="tab-label">Jarayonda</div>
+  </div>
+  <div class="tab-item" id="tab-done" onclick="switchPage('done')">
+    <div class="tab-icon-wrap green-tab">✅</div>
+    <div class="tab-label green-lbl">Tayyor</div>
+  </div>
+  <div class="tab-item" id="tab-stats" onclick="switchPage('stats')">
+    <div class="tab-icon-wrap purple-tab">📊</div>
+    <div class="tab-label purple-lbl">Natija</div>
+  </div>
+</nav>
+
+<script>
+  // ── Telegram setup ────────────────────────────────────────────────────
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.expand();
+    tg.setHeaderColor?.('#1a1a1e');
+    tg.setBackgroundColor?.('#0c0c0e');
+    const u = tg.initDataUnsafe?.user;
+    if (u) {
+      const tgName = [u.first_name, u.last_name].filter(Boolean).join(' ');
+      document.getElementById('chefName').textContent = tgName || document.getElementById('chefName').textContent;
+    }
+  }
+
+  const csrf = "{{ csrf_token|default:'' }}";
+
+  // ── State ─────────────────────────────────────────────────────────────
+  const PAGE_LIMIT = 8; // Cards shown initially per tab
+  const DATA = { new: [], cook: [], done: [] };
+  const SHOWN = { new: PAGE_LIMIT, cook: PAGE_LIMIT, done: PAGE_LIMIT };
+  let currentPage = 'new';
+
+  // ── Real-time (WebSocket) ─────────────────────────────────────────────
+  // Jonli ulanish ishlayotganda 15 s poll to'xtaydi, ulanish uzilsa
+  // avtomatik qayta ulanadi va zaxira sifatida poll ishlayveradi.
+  const POLL_MS = 15000;
+  let ws = null, wsRetry = 0, wsTimer = null, pollTimer = null;
+
+  function setLive(on) {
+    const dot = document.getElementById('liveDot');
+    if (dot) {
+      dot.style.opacity = on ? '1' : '0.35';
+      dot.title = on ? 'Jonli ulanish faol' : 'Jonli ulanish uzildi';
+    }
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(() => { if (!ws || ws.readyState > 1) loadOrders(true); }, POLL_MS);
+  }
+  function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    try { ws = new WebSocket(`${proto}://${location.host}/ws/staff/orders/`); }
+    catch (e) { scheduleRetry(); return; }
+
+    ws.onopen = () => { wsRetry = 0; setLive(true); stopPolling(); };
+
+    ws.onmessage = ev => {
+      let msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.action === 'order_update' || msg.action === 'order_new') {
+        // Yangi buyurtma bo'lsa eslatma beramiz
+        if (msg.action === 'order_new' && tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        loadOrders(true);
+      }
+    };
+
+    ws.onclose = () => { setLive(false); startPolling(); scheduleRetry(); };
+    ws.onerror = () => { try { ws.close(); } catch (e) {} };
+  }
+
+  function scheduleRetry() {
+    clearTimeout(wsTimer);
+    wsRetry = Math.min(wsRetry + 1, 6);
+    wsTimer = setTimeout(connectWS, 1000 * Math.pow(1.6, wsRetry));
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────
+  function switchPage(name) {
+    if (currentPage === name) return;
+    currentPage = name;
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+
+    document.getElementById(`page-${name}`)?.classList.add('active');
+    document.getElementById(`tab-${name}`)?.classList.add('active');
+
+    if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+  }
+
+  // ── Show more ─────────────────────────────────────────────────────────
+  function showMore(tab) {
+    SHOWN[tab] += PAGE_LIMIT;
+    renderList(tab, DATA[tab]);
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────
+  function toast(msg, color = 'var(--green)') {
+    const el = document.getElementById('chefToast');
+    el.innerHTML = `<span style="color:${color}">${msg}</span>`;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function elapsed(sec) {
+    if (sec < 60) return `${sec}s`;
+    const m = Math.floor(sec / 60);
+    if (m < 60) return `${m} daq`;
+    return `${Math.floor(m/60)}s ${m % 60}d`;
+  }
+  function elapsedClass(sec) {
+    if (sec < 600) return 'ok';
+    if (sec < 1200) return 'warn';
+    return 'urgent';
+  }
+
+  // ── Render new/cook card ──────────────────────────────────────────────
+  function renderCard(o, type) {
+    const ec = elapsedClass(o.elapsed_seconds);
+    const items = (o.items || []).map(it => `
+      <div class="order-item">
+        <div class="qty-badge">${it.quantity}</div>
+        <div class="item-name">${it.name}</div>
+        ${it.preparation_time ? `<div class="prep-time">⏱ ~${it.preparation_time}d</div>` : ''}
+      </div>`).join('');
+
+    const note = o.note ? `<div class="order-note">📝 <span>${o.note}</span></div>` : '';
+
+    const prep_total = (o.items || []).reduce((s, it) => Math.max(s, it.preparation_time || 10), 10);
+    const progress = type === 'cook' ? Math.min((o.elapsed_seconds / (prep_total * 60)) * 100, 100) : 0;
+    const progressHtml = type === 'cook' ? `
+      <div class="progress-wrap">
+        <div class="progress-fill" style="width:${progress.toFixed(1)}%"></div>
+      </div>` : '';
+
+    let actions = '';
+    if (type === 'new') {
+      actions = `<button class="action-btn btn-accept" onclick="updateStatus(${o.id},'tayyorlanmoqda')">👨‍🍳 Tayyorlashni boshlash</button>`;
+    } else if (type === 'cook') {
+      actions = `
+        <button class="action-btn btn-done" onclick="updateStatus(${o.id},'tayyor')">✅ Tayyor!</button>`;
+    }
+
+    return `
+    <div class="order-card ${type === 'new' ? 'new-order' : 'cooking'}" id="card-${o.id}">
+      <div class="card-bar ${type === 'new' ? 'bar-blue' : 'bar-yellow'}"></div>
+      <div class="card-body">
+        <div class="card-top">
+          <div>
+            <div class="order-num">#${o.id}</div>
+            ${o.customer_name ? `<div class="customer-name">👤 ${o.customer_name}</div>` : ''}
+          </div>
+          <div class="time-badge ${ec}">⏱ ${elapsed(o.elapsed_seconds)}</div>
+        </div>
+        <div class="items-list">${items}</div>
+        ${note}
+        ${progressHtml}
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>`;
+  }
+
+  // ── Render done card (compact) ────────────────────────────────────────
+  function renderDoneCard(o) {
+    const itemNames = (o.items || []).map(it => `${it.quantity}× ${it.name}`).join(', ');
+    return `
+    <div class="done-card-row">
+      <div class="done-icon">✅</div>
+      <div class="done-info">
+        <div class="done-num">#${o.id} <span style="font-size:12px;color:var(--text3);font-weight:500">${itemNames.substring(0,40)}${itemNames.length>40?'...':''}</span></div>
+        <div class="done-meta">${o.customer_name || ''}</div>
+      </div>
+      <div class="done-time">${o.done_at || ''}</div>
+    </div>`;
+  }
+
+  // ── Render list with pagination ───────────────────────────────────────
+  function renderList(tab, items) {
+    const containerMap = { new: 'list-new', cook: 'list-cook', done: 'list-done' };
+    const container = document.getElementById(containerMap[tab]);
+    const shown = SHOWN[tab];
+    const visible = items.slice(0, shown);
+    const remaining = items.length - shown;
+
+    if (!items.length) {
+      const messages = {
+        new: { emoji: '📭', title: 'Yangi buyurtma yo\'q', sub: 'Yangi buyurtma kelganda bu yerda ko\'rinadi.' },
+        cook: { emoji: '🧑‍🍳', title: 'Jarayonda buyurtma yo\'q', sub: 'Yangi buyurtmani qabul qilgach bu yerga o\'tadi.' },
+        done: { emoji: '🎉', title: 'Hali tayyor qilinmagan', sub: 'Siz tayyor degan buyurtmalar bu yerda ko\'rinadi.' },
+      };
+      const m = messages[tab];
+      container.innerHTML = `
+        <div class="empty-card">
+          <div class="empty-emoji">${m.emoji}</div>
+          <div class="empty-title">${m.title}</div>
+          <div class="empty-sub">${m.sub}</div>
+        </div>`;
+    } else {
+      if (tab === 'done') {
+        container.innerHTML = visible.map(o => renderDoneCard(o)).join('');
+      } else {
+        container.innerHTML = visible.map(o => renderCard(o, tab)).join('');
+      }
+    }
+
+    // Load more button
+    const moreBtn = document.getElementById(`more-${tab}`);
+    const moreCount = document.getElementById(`more-${tab}-count`);
+    if (remaining > 0) {
+      moreBtn.style.display = 'flex';
+      moreCount.textContent = remaining;
+    } else {
+      moreBtn.style.display = 'none';
+    }
+  }
+
+  // ── Stats page ────────────────────────────────────────────────────────
+  function renderStatsPage(stats) {
+    const total = (stats.yangi_count || 0) + (stats.active_count || 0) + (stats.today_done || 0);
+    document.getElementById('stats-detail').innerHTML = `
+      <div style="padding:0 14px;display:flex;flex-direction:column;gap:10px">
+        <div class="order-card" style="margin:0">
+          <div class="card-bar bar-blue"></div>
+          <div class="card-body" style="padding:16px">
+            <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">Bugungi natija</div>
+            ${[
+              ['🆕 Yangi (kutmoqda)', stats.yangi_count, 'var(--blue)'],
+              ['🔥 Tayyorlanmoqda', stats.active_count, 'var(--accent)'],
+              ['✅ Tayyor qilingan', stats.today_done, 'var(--green)'],
+              ['📦 Jami bugungi', total, 'var(--text)'],
+            ].map(([label, val, color]) => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:13.5px;font-weight:500">${label}</span>
+                <span style="font-size:18px;font-weight:800;color:${color}">${val || 0}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+          <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">Samaradorlik</div>
+          ${total > 0 ? `
+            <div style="margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+                <span>Bajarilish foizi</span>
+                <span style="color:var(--green);font-weight:700">${Math.round(((stats.today_done||0)/total)*100)}%</span>
+              </div>
+              <div class="progress-wrap" style="margin:0">
+                <div class="progress-fill bar-green" style="width:${Math.round(((stats.today_done||0)/total)*100)}%;background:var(--green)"></div>
+              </div>
+            </div>` : `<div style="color:var(--text3);font-size:13px">Bugun hali buyurtma yo'q</div>`}
+        </div>
+        <div style="text-align:center;padding:20px 0;color:var(--text3);font-size:12px">
+          🕒 Avtomatik yangilanadi (15 soniyada bir)
+        </div>
+      </div>`;
+  }
+
+  // ── Load data ─────────────────────────────────────────────────────────
+  async function loadOrders(silent = false) {
+    if (!silent) {
+      const btn = document.getElementById('refreshBtn');
+      btn.style.animation = 'spin 0.5s linear infinite';
+    }
+    try {
+      const res = await fetch('/api/staff/chef/orders/');
+      if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+
+      // Update stats
+      const yangi = data.stats?.yangi_count || 0;
+      const active = data.stats?.active_count || 0;
+      const done = data.stats?.today_done || 0;
+      const total = yangi + active + done;
+
+      document.getElementById('st-new').textContent = yangi;
+      document.getElementById('st-cook').textContent = active;
+      document.getElementById('st-done').textContent = done;
+      document.getElementById('st-total').textContent = total;
+
+      // Section badges
+      document.getElementById('bdg-new').textContent = yangi;
+      document.getElementById('bdg-cook').textContent = active;
+      document.getElementById('bdg-done').textContent = done;
+
+      // Tab badges
+      const tbNew = document.getElementById('tbdg-new');
+      tbNew.textContent = yangi;
+      tbNew.classList.toggle('hidden', yangi === 0);
+
+      const tbCook = document.getElementById('tbdg-cook');
+      tbCook.textContent = active;
+      tbCook.classList.toggle('hidden', active === 0);
+
+      // Save data
+      DATA.new = data.yangi || [];
+      DATA.cook = [...(data.qabul_qilindi || []), ...(data.tayyorlanmoqda || [])];
+      DATA.done = data.tayyor || [];
+
+      // Render current visible lists
+      renderList('new', DATA.new);
+      renderList('cook', DATA.cook);
+      renderList('done', DATA.done);
+      renderStatsPage(data.stats || {});
+
+      document.getElementById('loader').style.display = 'none';
+    } catch (e) {
+      console.error(e);
+      toast('❌ Yuklanmadi: ' + e.message, 'var(--red)');
+    } finally {
+      document.getElementById('refreshBtn').style.animation = '';
+    }
+  }
+
+  // ── Update status ─────────────────────────────────────────────────────
+  async function updateStatus(id, newStatus) {
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+    // Optimistic: fade card
+    const card = document.getElementById(`card-${id}`);
+    if (card) { card.style.opacity = '0.45'; card.style.transform = 'scale(0.97)'; card.style.transition = '0.2s'; }
+
+    try {
+      const res = await fetch(`/api/staff/chef/orders/${id}/status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Xatolik');
+
+      if (newStatus === 'tayyor') {
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        toast('✅ Tayyor! Kuryer kutmoqda.', 'var(--green)');
+        switchPage('done');
+      } else {
+        toast('🍳 Tayyorlash boshlandi', 'var(--accent)');
+        switchPage('cook');
+      }
+
+      await loadOrders(true);
+    } catch (e) {
+      if (card) { card.style.opacity = '1'; card.style.transform = ''; }
+      toast('❌ ' + e.message, 'var(--red)');
+    }
+  }
+
+  function refresh() {
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    loadOrders();
+  }
+
+  // Real-time oqim + zaxira poll
+  setLive(false);
+  startPolling();
+  connectWS();
+  loadOrders();
+</script>
+</body>
+</html>
